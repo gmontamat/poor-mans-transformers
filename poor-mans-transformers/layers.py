@@ -1,8 +1,22 @@
 import numpy as np
 
-from types import Tuple, Optional
+from typing import Tuple, Optional, List
 
-from .optimizers import Optimizer, Adam
+from .optimizers import Optimizer
+
+
+class TrainableParameter:
+
+    def __init__(self, weights: Optional[np.ndarray] = None, optimizer: Optional[Optimizer] = None):
+        self.weights = weights
+        self.optimizer = optimizer
+
+    def __call__(self) -> np.ndarray:
+        return self.weights
+
+    def update(self, grad: np.ndarray):
+        assert self.weights is not None and self.optimizer is not None
+        self.weights = self.optimizer(self.weights, grad)
 
 
 class Layer:
@@ -13,24 +27,28 @@ class Layer:
     Some layers also have learnable parameters which they update during layer.backward.
     """
 
-    def __init__(self):
-        """Define layer's input and output shape and parameters (if any)."""
-        self.input_shape = None
-        self.output_shape = None
+    def __init__(self,
+                 input_shape: Optional[Tuple[Optional[int], ...]] = None,
+                 output_shape: Optional[Tuple[Optional[int], ...]] = None):
+        """Define layer's input and output shape, and parameters (if any)."""
+        self.input_shape = input_shape
+        self.output_shape = output_shape
 
-    def initialize_parameters(self):
-        raise NotImplementedError()
+    def initialize(self):
+        """Initialize parameters weights and optimizers."""
+        pass
 
-    def update_parameters(self, **kwargs):
-        raise NotImplementedError()
+    def get_trainable_params(self) -> List[TrainableParameter]:
+        """Return parameters used on the layer."""
+        return [param for param in dir(self) if isinstance(param, TrainableParameter)]
 
-    def forward(self, x):
+    def forward(self, x: np.ndarray) -> np.ndarray:
         """Take input data of shape `input_shape`, perform forward pass.
         """
         # Dummy layer just returns whatever it gets as input.
         return x
 
-    def backward(self, x, grad):
+    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
         """Perform backpropagation step through the layer with respect to a given input (x).
         To compute loss gradients w.r.t x, you need to apply chain rule:
         d_loss / d_x  = (d_loss / d_layer) * (d_layer / d_x)
@@ -50,25 +68,19 @@ class Dense(Layer):
     """
 
     def __init__(self, n_units: int, input_shape: Optional[Tuple[Optional[int], int]] = None):
-        super().__init__()
-        self.input_shape = input_shape
-        self.output_shape = (input_shape[0] if input_shape else None, n_units)
+        super().__init__(input_shape, (input_shape[0] if input_shape else None, n_units))
         self.n_units = n_units
-        self.W = None
-        self.b = None
+        self.W = TrainableParameter()
+        self.b = TrainableParameter()
 
-    def initialize_parameters(self):
+    def initialize(self):
         """Initialize parameters using Xavier initialization (aka. glorot_uniform).
         """
         assert self.input_shape is not None, "`input_shape` must be specified if it is the first layer in the network."
         input_units = self.input_shape[1]
         # Define parameters and perform Xavier initialization (aka. glorot_uniform)
-        self.W = np.random.normal(0., np.sqrt(1. / input_units), size=(input_units, self.n_units))
-        self.b = np.zeros(self.n_units)
-
-    def update_parameters(self, grad_W: np.ndarray, grad_b: np.ndarray):
-        """Update layer's parameters using Adam"""
-        assert grad_W.shape == self.W.shape and grad_b.shape == self.b.shape
+        setattr(self.W, 'weights', np.random.normal(0., np.sqrt(1. / input_units), size=(input_units, self.n_units)))
+        setattr(self.b, 'weights', np.zeros(self.n_units))
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         """
@@ -77,15 +89,36 @@ class Dense(Layer):
         input shape: [batch, input_units]
         output shape: [batch, n_units]
         """
-        return np.dot(x, self.W) + self.b
+        W, b = self.W(), self.b()
+        return np.dot(x, W) + b
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
-        # compute d_loss / d_x = d_loss / d_dense * d_dense / d_x
-        # where d_dense / d_x are the transposed weights
-        grad_x = np.dot(grad, self.W.T)
-        # compute gradient w.r.t. weights and biases (d_loss / d_weights)
-        grad_W = np.dot(x.T, grad)
-        grad_b = np.dot(np.ones((x.shape[0],)), grad)
-        # Update parameters
-        self.update_parameters(grad_W, grad_b)
+        """Compute d_loss / d_W and d_loss / d_b to update parameters
+        and return d_loss / d_x = d_loss / d_dense * d_dense / d_x"""
+        W, b = self.W(), self.b()
+        grad_x = np.dot(grad, W.T)
+        self.W.update(np.dot(x.T, grad))
+        self.b.update(np.dot(np.ones((x.shape[0],)), grad))
         return grad_x
+
+
+class Dropout(Layer):
+
+    def __init__(self, rate: float,
+                 input_shape: Optional[Tuple[Optional[int], int]] = None,
+                 mode: str = 'train'):
+        super().__init__(input_shape, input_shape)
+        self.rate = rate
+        self.factor = 1. / (1. - rate)
+        self.mode = mode
+        self.last_forwards = None
+
+    def forward(self, x):
+        if self.mode == 'train':
+            self.last_forwards = (np.random.random(x.shape) > self.rate).astype(np.float32)
+            return np.multiply(self.last_forwards, x) * self.factor
+        return x
+
+    def backward(self, x, grad):
+        assert self.last_forwards is not None
+        return np.multiply(self.last_forwards, grad) * self.factor
