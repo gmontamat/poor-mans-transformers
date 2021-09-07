@@ -27,7 +27,10 @@ handle information flow (serial, parallel, concatenations). At the same time, I 
 flexible and feature-rich framework since we have PyTorch, TensorFlow Keras,
 and [Google Trax](https://github.com/google/trax) for that.
 
+I implemented the basic objects: `layers.Layer` and `layers.TrainableParameter` along with the `Dense` and `Dropout`
+layers.
+
 ### Embeddings
 
-My first goal is to have an `Embedding` layer implemented. Even try to train a Continuous bag-of-words (CBOW) model and
+My next goal is to have an `Embedding` layer implemented. Even try to train a Continuous Bag of Words (CBOW) model and
 try to replicate [word2vec]().
