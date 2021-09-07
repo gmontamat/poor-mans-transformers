@@ -6,21 +6,33 @@ from .optimizers import Optimizer
 
 
 class TrainableParameter:
+    """
+    Parameter base class. Only layers can instantiate these objects
+    and they need to initialize the weights and set the optimizer
+    before doing forward/backward propagation.
+    """
 
     def __init__(self, weights: Optional[np.ndarray] = None, optimizer: Optional[Optimizer] = None):
         self.weights = weights
         self.optimizer = optimizer
 
     def __call__(self) -> np.ndarray:
+        """Access the weights easily with
+        p = TrainableParameter()
+        p()
+        """
+        assert self.weights is not None
         return self.weights
 
     def update(self, grad: np.ndarray):
+        """Update weights given d_loss / d_weights (grad)."""
         assert self.weights is not None and self.optimizer is not None
         self.weights = self.optimizer(self.weights, grad)
 
 
 class Layer:
-    """Layer building block.
+    """
+    Layer building block.
     Each layer is capable of performing two things:
     - Process input to get output:           output = layer.forward(x)
     - Propagate gradients through itself:    grad_input = layer.backward(x, grad)
