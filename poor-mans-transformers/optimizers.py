@@ -6,7 +6,8 @@ class Optimizer:
     def __init__(self):
         pass
 
-    def __call__(self, parameter: np.ndarray, grad: np.ndarray):
+    def __call__(self, weights: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        """Compute updated weights and return them."""
         raise NotImplementedError()
 
 
@@ -29,14 +30,14 @@ class Adam(Optimizer):
         self.v = None
         self.t = 0
 
-    def __call__(self, parameter: np.ndarray, grad: np.ndarray):
-        assert parameter.shape == grad.shape
+    def __call__(self, weights: np.ndarray, grad: np.ndarray):
+        assert weights.shape == grad.shape
         self.t += 1
         if self.m is None:
-            self.m = np.zeros_like(parameter)
-            self.v = np.zeros_like(parameter)
+            self.m = np.zeros_like(weights)
+            self.v = np.zeros_like(weights)
         self.m = self.beta1 * self.m + (1. - self.beta1) * grad
         self.v = self.beta2 * self.v + (1. - self.beta2) * np.power(grad, 2)
         m_hat = self.m / (1. - self.beta1 ** self.t)
         v_hat = self.v / (1. - self.beta2 ** self.t)
-        return parameter - self.learning_rate * m_hat / (np.sqrt(v_hat) + self.eps)
+        return weights - self.learning_rate * m_hat / (np.sqrt(v_hat) + self.eps)
