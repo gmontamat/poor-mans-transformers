@@ -1,4 +1,6 @@
-# poor-mans-transformers
+# Poor Man's Transformers
+
+Advanced Deep Learning from the ground-up.
 
 The idea of this repository is to implement all the necessary layers of a transformer using only `numpy` for learning
 purposes. The final goal is to train a Transformer model on [QQP](https://www.kaggle.com/c/quora-question-pairs) or a
@@ -9,23 +11,28 @@ the [Natural Language Processing Specialization](https://www.coursera.org/specia
 
 ## Development logs
 
-I'm keeping track of my progress in this section
+I'm keeping track of my progress in this section so it can be used for future reference when learning Deep Learning from
+the very beginnings.
 
 ### First steps: basic layers and training framework
 
-First things first, I need to implement the basic architecture of the framework and be able to train an MLP with it. I
-base my work
+First things first, I need to implement the basic structure of the framework and be able to train a Multilayer
+Perceptron (MLP) with it. I base my work
 on [ML-From-Scratch Deep Learning implementation](https://github.com/eriklindernoren/ML-From-Scratch#deep-learning)
 and an assignment from the [Introduction to Deep Learning](https://www.coursera.org/learn/intro-to-deep-learning)
 course.
 
 Even though this was supposed to be an easy step, I ended up spending a lot of time on it trying to come up with the
-simplest architecture possible. New layers have to be easy to code, and I also want to experiment with different
+simplest OOP architecture possible. New layers have to be easy to code, and I also want to experiment with different
 optimizers (SGD, Adam, RMSProp), learning rate schedules, activation functions (ReLU, tanh, sigmoid, Softmax,
 LogSoftmax), custom loss functions (sum binary cross-entropy and categorical cross-entropy as they do in BERT) and
 handle information flow (serial, parallel, concatenations). At the same time, I wouldn't like to waste time building a
 flexible and feature-rich framework since we have PyTorch, TensorFlow Keras,
 and [Google Trax](https://github.com/google/trax) for that.
+
+To keep this toy "framework" as simple as possible, I want to minimize the number of base-classes: `Layers`,
+`TrainableParameter` (used in `Layers` with an associated `Optimizer`), `Model`, and `Loss`. Activation functions will
+be implemented as `Layer` objects.
 
 I implemented the basic objects: `layers.Layer` and `layers.TrainableParameter` along with the `Dense` and `Dropout`
 layers.
