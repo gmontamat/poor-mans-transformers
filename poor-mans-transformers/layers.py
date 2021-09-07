@@ -68,7 +68,7 @@ class Dense(Layer):
     """
 
     def __init__(self, n_units: int, input_shape: Optional[Tuple[Optional[int], int]] = None):
-        super().__init__(input_shape, (input_shape[0] if input_shape else None, n_units))
+        super().__init__(input_shape, (input_shape[0] if input_shape is not None else None, n_units))
         self.n_units = n_units
         self.W = TrainableParameter()
         self.b = TrainableParameter()
@@ -100,6 +100,32 @@ class Dense(Layer):
         self.W.update(np.dot(x.T, grad))
         self.b.update(np.dot(np.ones((x.shape[0],)), grad))
         return grad_x
+
+
+class ReLU(Layer):
+
+    def __init__(self, input_shape: Optional[Tuple[Optional[int], ...]] = None):
+        super().__init__(input_shape, input_shape)
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        return np.maximum(x, np.zeros_like(x))
+
+    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        return (x > 0.).astype(grad.dtype) * grad
+
+
+class Softmax(Layer):
+
+    def __init__(self, input_shape: Optional[Tuple[Optional[int], int]] = None):
+        super().__init__(input_shape, input_shape)
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))  # Shift to negatives to avoid overflow
+        return e_x / np.sum(e_x, axis=-1, keepdims=True)
+
+    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        probs = self.forward(x)
+        return probs * (1. - probs) * grad
 
 
 class Dropout(Layer):
