@@ -132,7 +132,9 @@ class Softmax(Layer):
         super().__init__(input_shape, input_shape)
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))  # Shift to negatives to avoid overflow
+        # Shift to negatives to avoid overflow
+        # aka. stable softmax
+        e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
         return e_x / np.sum(e_x, axis=-1, keepdims=True)
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
