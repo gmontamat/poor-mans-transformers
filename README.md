@@ -9,7 +9,7 @@ model that performs NER decently. I was inspired by
 the [Advanced Machine Learning Specialization](https://www.coursera.org/specializations/aml), and
 the [Natural Language Processing Specialization](https://www.coursera.org/specializations/natural-language-processing).
 
-## Development logs
+## Development log
 
 I'm keeping track of my progress in this section, so it can be used for future reference when learning Deep Learning
 from the very beginnings.
@@ -26,37 +26,56 @@ Even though this was supposed to be an easy step, I ended up spending a lot of t
 simplest OOP architecture possible. New layers have to be easy to code, and I also want to experiment with different
 optimizers (SGD, Adam, RMSProp), learning rate schedules, activation functions (ReLU, tanh, sigmoid, Softmax,
 LogSoftmax), custom loss functions (sum binary cross-entropy and categorical cross-entropy as they do in BERT) and
-handle information flow (serial, parallel, concatenations). At the same time, I wouldn't like to waste time building a
-flexible and feature-rich framework since we have PyTorch, TensorFlow Keras,
+handle input & output flow (serial, parallel, concatenations). At the same time, I wouldn't like to waste time building
+a flexible and feature-rich framework since we have PyTorch, TensorFlow with Keras,
 and [Google Trax](https://github.com/google/trax) for that.
 
 To keep this toy "framework" as simple as possible, I want to minimize the number of base-classes: `Layers`,
-`TrainableParameter` (used in `Layers` with an associated `Optimizer`), `Model`, and `Loss`. Activation functions will
-be implemented as `Layer` objects. This simplification comes with its costs, of course, in terms of memory usage: more
+`Parameter` (used in `Layers` with an associated `Optimizer`), `Trainer`, and `Loss`. Activation functions will be
+implemented as `Layer` objects. This simplification comes with its costs, of course, in terms of memory usage: more
 "intermediate" tensors will be stored. When using `Dense` and `ReLU`, for example, both the linear combination vector
-and the rectified vectors will be stored in memory.
+and the rectified (`max(X, 0)`) vectors will be stored in memory.
 
 Here's the list of objects I implemented:
 
 #### Layer
 
-A layer performs the forward propagation, for which it receives an input `x` and uses its `TrainableParameter`s to
-compute the output. It also performs the backward propagation for it which receives the accumulated gradient `grad`
-which represents `d_loss / d_layer` to propagate `d_loss / d_x = d_loss / d_layer * d_layer / d_x` and also the
-input `x` used in the forward step to compute the gradients with respect to the parameters
-`d_loss / d_param = d_loss / d_layer * d_layer / d_param`. It calls an update method for all `TrainableParameters` which
-use an `Optimizer` to update their weights. Finally, the accumulated gradient is passed to continue the backward
-propagation.
+A layer performs the forward propagation, for which it receives an input `X` and uses its `Parameters`s to compute the
+output. It also performs the backward propagation for it which receives the accumulated gradient `grad`
+which represents `d_loss / d_layer` to propagate `d_loss / d_X = d_loss / d_layer * d_layer / d_X` and also the
+input `X` passed in the forward step to compute the gradients with respect to the parameters (`W`)
+`d_loss / d_W = d_loss / d_layer * d_layer / d_W`. It calls an update method for all `Parameter`s which use
+an `Optimizer` to update their weights. Finally, the accumulated gradient is returned to continue the backward
+propagation process.
 
-#### TrainableParameter
+When instantiated, an `input_shape` can be defined, or it will be computed by the `Trainer` during the model
+initialization step. The initial values for the `Parameter`s also need to be defined during this step.
+
+#### Parameter
+
+These objects are used only by `Layer` instances. Their value can be accessed by calling an instantiated object and are
+updated during backpropagation using the `update()` method. For it to be called, an `Optimizer` needs to be instantiated
+within this object and the initial values need to be defined in the `Layer`'s initialization.
 
 #### Optimizer
 
-#### Loss
+Each `Parameter` instantiated in the framework will create an instance of this type with the properties defined in
+the `Trainer`. It is in charge of updating the parameter's value and may store auxiliary variables to do so, hence, each
+parameter has a unique variant of it.
 
-#### Model
+#### Loss and Metric
 
-### Embeddings
+These classes are pretty straightforward
+
+#### Model and Trainer
+
+Instead of following Keras-style Sequential Model and the `model.compile()` method to define the optimizer, loss, and
+metrics, a `Model` in this framework is just a list of `Layer` instances (I think this will help us handle complex flows
+with stack operations). Hence, I defined the `Trainer` which receives a model, optimizer, loss, learning rate schedule,
+early stopping, and metrics to run the supervised training with training and evaluation data generators. This approach
+resembles the Trax framework more than Keras or PyTorch.
+
+### Embedding layer
 
 My next goal is to have an `Embedding` layer implemented. Even try to train a Continuous Bag of Words (CBOW) model and
 try to replicate [word2vec]().
