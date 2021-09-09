@@ -30,7 +30,7 @@ class Adam(Optimizer):
         self.v = None
         self.t = 0
 
-    def __call__(self, weights: np.ndarray, grad: np.ndarray):
+    def __call__(self, weights: np.ndarray, grad: np.ndarray) -> np.ndarray:
         assert weights.shape == grad.shape
         self.t += 1
         if self.m is None:
