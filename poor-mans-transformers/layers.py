@@ -5,7 +5,7 @@ from typing import Tuple, Optional, List
 from .optimizers import Optimizer
 
 
-class TrainableParameter:
+class Parameter:
     """
     Parameter base class. Only layers can instantiate these objects
     and they need to initialize the weights and set the optimizer
@@ -18,8 +18,7 @@ class TrainableParameter:
 
     def __call__(self) -> np.ndarray:
         """Access the weights easily with
-        p = TrainableParameter()
-        p()
+        p = Parameter(); p()
         """
         assert self.weights is not None
         return self.weights
@@ -50,9 +49,9 @@ class Layer:
         """Initialize parameters weights and optimizers."""
         pass
 
-    def get_trainable_params(self) -> List[TrainableParameter]:
-        """Return parameters used on the layer."""
-        return [param for param in dir(self) if isinstance(param, TrainableParameter)]
+    def get_parameters(self) -> List[Parameter]:
+        """Return all parameters used by the layer."""
+        return [parameter for parameter in dir(self) if isinstance(parameter, Parameter)]
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         """Take input data of shape `input_shape`, perform forward pass.
@@ -82,8 +81,8 @@ class Dense(Layer):
     def __init__(self, n_units: int, input_shape: Optional[Tuple[Optional[int], int]] = None):
         super().__init__(input_shape, (input_shape[0] if input_shape is not None else None, n_units))
         self.n_units = n_units
-        self.W = TrainableParameter()
-        self.b = TrainableParameter()
+        self.W = Parameter()
+        self.b = Parameter()
 
     def initialize(self):
         """Initialize parameters using Xavier initialization (aka. glorot_uniform).
@@ -138,8 +137,22 @@ class Softmax(Layer):
         return e_x / np.sum(e_x, axis=-1, keepdims=True)
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
-        probs = self.forward(x)
-        return probs * (1. - probs) * grad
+        p = self.forward(x)
+        return p * (1. - p) * grad
+
+
+class LogSoftmax(Layer):
+
+    def __init__(self, input_shape: Optional[Tuple[Optional[int], int]] = None):
+        super().__init__(input_shape, input_shape)
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        return x - np.sum(x, axis=-1, keepdims=True)
+
+    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        # TODO: check your lazy math!
+        softmax = np.exp(self.forward(x))
+        return (1. - softmax(x)) * grad
 
 
 class Dropout(Layer):
@@ -153,12 +166,12 @@ class Dropout(Layer):
         self.mode = mode
         self.last_forwards = None
 
-    def forward(self, x):
+    def forward(self, x: np.ndarray) -> np.ndarray:
         if self.mode == 'train':
             self.last_forwards = (np.random.random(x.shape) > self.rate).astype(np.float32)
             return np.multiply(self.last_forwards, x) * self.factor
         return x
 
-    def backward(self, x, grad):
+    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
         assert self.last_forwards is not None
         return np.multiply(self.last_forwards, grad) * self.factor
