@@ -30,8 +30,8 @@ handle input & output flow (serial, parallel, concatenations). At the same time,
 a flexible and feature-rich framework since we have PyTorch, TensorFlow with Keras,
 and [Google Trax](https://github.com/google/trax) for that.
 
-To keep this toy "framework" as simple as possible, I want to minimize the number of base-classes: `Layers`,
-`Parameter` (used in `Layers` with an associated `Optimizer`), `Trainer`, and `Loss`. Activation functions will be
+To keep this toy "framework" as simple as possible, I want to minimize the number of base-classes: `Layer`,
+`Parameter` (used in `Layer`s with an associated `Optimizer`), `Trainer`, and `Loss`. Activation functions will be
 implemented as `Layer` objects. This simplification comes with its costs, of course, in terms of memory usage: more
 "intermediate" tensors will be stored. When using `Dense` and `ReLU`, for example, both the linear combination vector
 and the rectified (`max(X, 0)`) vectors will be stored in memory.
@@ -65,7 +65,9 @@ parameter has a unique variant of it.
 
 #### Loss and Metric
 
-These classes are pretty straightforward
+These classes are pretty straightforward: instances are called with the ground truth `y` and predictions `y_hat` (or
+prediction's probabilities *logits*) and return the calculated metric. The `Loss` class also returns the gradient
+`d_loss / d_yhat` to begin the backward propagation.
 
 #### Model and Trainer
 
