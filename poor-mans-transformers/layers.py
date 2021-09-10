@@ -51,7 +51,7 @@ class Layer:
 
     def get_parameters(self) -> List[Parameter]:
         """Return all parameters used by the layer."""
-        return [parameter for parameter in dir(self) if isinstance(parameter, Parameter)]
+        return [attr for attr in dir(self) if isinstance(attr, Parameter)]
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         """Take input data of shape `input_shape`, perform forward pass.
@@ -173,5 +173,5 @@ class Dropout(Layer):
         return x
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
-        assert self.last_forwards is not None
+        assert self.last_forwards is not None, "Do forward pass before backward"
         return np.multiply(self.last_forwards, grad) * self.factor
