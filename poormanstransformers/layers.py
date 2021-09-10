@@ -1,6 +1,6 @@
 import numpy as np
 
-from typing import Tuple, Optional, List
+from typing import List, Optional, Tuple
 
 from .optimizers import Optimizer
 
@@ -45,13 +45,16 @@ class Layer:
         self.input_shape = input_shape
         self.output_shape = output_shape
 
+    def __str__(self):
+        return f"{type(self).__name__.ljust(15)}: {self.output_shape}"
+
     def initialize(self):
         """Initialize parameters weights and optimizers."""
         pass
 
     def get_parameters(self) -> List[Parameter]:
         """Return all parameters used by the layer."""
-        return [attr for attr in dir(self) if isinstance(attr, Parameter)]
+        return [getattr(self, attr) for attr in dir(self) if isinstance(getattr(self, attr), Parameter)]
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         """Take input data of shape `input_shape`, perform forward pass.
@@ -72,6 +75,18 @@ class Layer:
         return np.dot(grad, d_layer_d_input)
 
 
+class Activation(Layer):
+    """
+    Base layer whose input and output shape are the same.
+    """
+
+    def __init__(self, input_shape: Optional[Tuple[Optional[int], ...]] = None):
+        super(Activation, self).__init__(input_shape=input_shape, output_shape=input_shape)
+
+    def initialize(self):
+        self.output_shape = self.input_shape
+
+
 class Dense(Layer):
     """
     A fully-connected layer which performs a learned affine transformation:
@@ -79,7 +94,7 @@ class Dense(Layer):
     """
 
     def __init__(self, n_units: int, input_shape: Optional[Tuple[Optional[int], int]] = None):
-        super().__init__(input_shape, (input_shape[0] if input_shape is not None else None, n_units))
+        super(Dense, self).__init__(input_shape, (input_shape[0] if input_shape is not None else None, n_units))
         self.n_units = n_units
         self.W = Parameter()
         self.b = Parameter()
@@ -113,10 +128,7 @@ class Dense(Layer):
         return grad_x
 
 
-class ReLU(Layer):
-
-    def __init__(self, input_shape: Optional[Tuple[Optional[int], ...]] = None):
-        super().__init__(input_shape, input_shape)
+class ReLU(Activation):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         return np.maximum(x, np.zeros_like(x))
@@ -125,10 +137,7 @@ class ReLU(Layer):
         return (x > 0.).astype(grad.dtype) * grad
 
 
-class Softmax(Layer):
-
-    def __init__(self, input_shape: Optional[Tuple[Optional[int], int]] = None):
-        super().__init__(input_shape, input_shape)
+class Softmax(Activation):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         # Shift to negatives to avoid overflow
@@ -141,10 +150,7 @@ class Softmax(Layer):
         return p * (1. - p) * grad
 
 
-class LogSoftmax(Layer):
-
-    def __init__(self, input_shape: Optional[Tuple[Optional[int], int]] = None):
-        super().__init__(input_shape, input_shape)
+class LogSoftmax(Activation):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         return x - np.sum(x, axis=-1, keepdims=True)
@@ -155,12 +161,12 @@ class LogSoftmax(Layer):
         return (1. - softmax(x)) * grad
 
 
-class Dropout(Layer):
+class Dropout(Activation):
 
     def __init__(self, rate: float,
                  input_shape: Optional[Tuple[Optional[int], int]] = None,
                  mode: str = 'train'):
-        super().__init__(input_shape, input_shape)
+        super(Dropout, self).__init__(input_shape)
         self.rate = rate
         self.factor = 1. / (1. - rate)
         self.mode = mode
