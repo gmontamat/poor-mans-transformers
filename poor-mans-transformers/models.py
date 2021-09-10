@@ -64,14 +64,15 @@ class Trainer:
             self.initialize_layer(layer)
 
     def fit(self,
-            train_generator: Generator[np.ndarray],
-            eval_generator: Optional[Generator[np.ndarray]] = None,
-            epochs: int = 1):
+            train_generator: Generator[Tuple[np.ndarray, np.ndarray]],
+            epochs: int,
+            eval_generator: Optional[Generator[Tuple[np.ndarray, np.ndarray]]] = None):
         """Train model with data passed."""
         self.prepare_model()
         for epoch in range(epochs):
             print(f"Epoch {epoch+1}/{epochs}...")
             train_loss = []
+            train_metrics = {str(metric): [] for metric in self.metrics}
             for x_train, y_train in train_generator:
                 outputs = [x_train]
                 # Forward propagation
@@ -80,7 +81,16 @@ class Trainer:
                 # Compute loss and grad w.r.t. final output
                 loss, grad = self.loss(y_train, outputs[-1])
                 train_loss.append(loss)
+                # Compute metrics
+                for metric in self.metrics:
+                    if isinstance(metric, Loss):
+                        value, _ = metric(y_train, outputs[-1])
+                    else:
+                        value = metric(y_train, outputs[-1])
+                    train_metrics[str(metric)] = value
                 # Backward propagation
                 for layer, layer_input in zip(reversed(self.layers), reversed(outputs[:-1])):
                     grad = layer.backward(layer_input, grad)
             print(np.mean(train_loss))
+            for metric in self.metrics:
+                print(np.mean(train_metrics[str(metric)]))
