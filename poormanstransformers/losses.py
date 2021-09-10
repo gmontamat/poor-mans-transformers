@@ -31,7 +31,7 @@ class CategoricalCrossEntropy(Loss):
     def __init__(self, from_logits: bool = False):
         """Need to specify whether y_hat are logits or probabilities.
         """
-        super().__init__()
+        super(CategoricalCrossEntropy, self).__init__()
         self.from_logits = from_logits
 
     def __call__(self, y: np.ndarray, y_hat: np.ndarray) -> Tuple[float, np.ndarray]:
