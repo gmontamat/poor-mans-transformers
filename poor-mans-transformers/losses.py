@@ -21,6 +21,10 @@ class Loss:
         """Return loss value and gradients w.r.t. y_hat"""
         raise NotImplementedError()
 
+    def __str__(self) -> str:
+        """Print Loss metric name."""
+        raise NotImplementedError()
+
 
 class CategoricalCrossEntropy(Loss):
 
@@ -44,6 +48,9 @@ class CategoricalCrossEntropy(Loss):
             grad = (y_hat - y) / y.shape[0]
         return float(loss), grad
 
+    def __str__(self) -> str:
+        return "categorical-cross-entropy"
+
 
 class Metric:
 
@@ -54,6 +61,10 @@ class Metric:
         """Return computed metric."""
         raise NotImplementedError()
 
+    def __str__(self) -> str:
+        """Print metric name."""
+        raise NotImplementedError()
+
 
 class Accuracy(Metric):
 
@@ -62,3 +73,6 @@ class Accuracy(Metric):
 
     def __call__(self, y: np.ndarray, y_hat: np.ndarray, threshold: float = 0.5) -> float:
         return float(np.mean(y == (y_hat > threshold).astype(y.dtype)))
+
+    def __str__(self) -> str:
+        return "accuracy"
