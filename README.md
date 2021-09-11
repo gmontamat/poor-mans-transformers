@@ -42,12 +42,13 @@ Here's the list of objects I implemented:
 #### :pushpin: Layer and Activation
 
 A layer performs two operations: forward propagation and backward propagation. For doing the forward pass, it receives
-an input `X` and uses its `Parameter`s to compute the output. And in the case of the backward pass, it receives the
-accumulated gradient `grad` (which represents `d_loss / d_layer`) to compute and propagate to the previous layer
-`d_loss / d_input = d_loss / d_layer * d_layer / d_input`. It also receives the input `X` used in the forward step to
-compute the gradients with respect to the parameters `d_loss / d_parameter = d_loss / d_layer * d_layer / d_parameter`.
-Next, it calls the `update` method on all `Parameter`s which use an `Optimizer` instance to update their weights.
-Finally, the accumulated gradient `d_loss / d_input` is returned to proceed with the network's backward propagation.
+an input batch `X` and uses its `Parameter`s to compute the output batch. And in the case of the backward pass, it
+receives the accumulated gradient `grad` (which represents `d_loss / d_layer`) to compute and propagate to the previous
+layer: `d_loss / d_input = d_loss / d_layer * d_layer / d_input`. It also receives the input batch `X` used in the
+forward step to compute the gradients with respect to the
+parameters `d_loss / d_parameter = d_loss / d_layer * d_layer / d_parameter`. Next, it calls the `update` method on
+all `Parameter`s which use an `Optimizer` instance to update their weights. Finally, the accumulated
+gradient `d_loss / d_input` is returned to proceed with the network's backward propagation.
 
 When instantiated, an `input_shape` and `output_shape` can be defined, or they will be set by the `Trainer` during the
 model initialization step. The initial weights of each `Parameter` also need to be defined during this step.
