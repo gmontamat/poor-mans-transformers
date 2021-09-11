@@ -59,7 +59,7 @@ An `Activation` is a special type of `Layer` whose `input_shape` and `output_sha
 :white_check_mark: [Dense](poormanstransformers/layers.py#L90-L128)
 :white_check_mark: [ReLU](poormanstransformers/layers.py#L131-L137)
 :white_check_mark: [Softmax](poormanstransformers/layers.py#L140-L150)
-:white_check_mark: [LogSoftmax](poormanstransformers/layers.py#153-L161)
+:white_check_mark: [LogSoftmax](poormanstransformers/layers.py#L153-L161)
 :white_check_mark: [Dropout](poormanstransformers/layers.py#L164-L183)
 
 #### :pushpin: Parameter and Optimizer
@@ -83,7 +83,10 @@ These classes are pretty straightforward: instances are called with the ground t
 prediction's probabilities *logits*) and return the calculated metric. The `Loss` class also returns the gradient
 `d_loss / d_yhat` to begin the backward propagation.
 
-
+:heavy_check_mark: [Loss](poormanstransformers/losses.py#L6-L27)
+:heavy_check_mark: [Metric](poormanstransformers/losses.py#L50-L61)
+:white_check_mark: [CategoricalCrossEntropy](poormanstransformers/losses.py#L30-L47)
+:white_check_mark: [Accuracy](poormanstransformers/losses.py#L64-L72)
 
 #### :pushpin: Model, Trainer, and DataGeneratorWrapper
 
@@ -96,9 +99,12 @@ resembles the Trax framework more than Keras or PyTorch.
 The `fit` method in the `Trainer` is the key one in this class. It prepares the model by setting and validating the
 `input_shape` and `output_shape` for every layer, and initializing the layer's weights. Next, given a.
 
-#### :construction: Example code
+:heavy_check_mark: [Trainer](poormanstransformers/train.py#L31)
+:heavy_check_mark: [DataGeneratorWrapper](poormanstransformers/train.py#L15-L28)
 
-:heavy_check_mark: MLP with MNIST Digit recognition
+#### :construction: Sample code
+
+:heavy_check_mark: MLP for MNIST Digit recognition
 
 ### :construction: Embedding layer
 
