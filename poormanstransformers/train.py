@@ -13,6 +13,10 @@ Model = List[Layer]
 
 
 class DataGeneratorWrapper:
+    """
+    Wrap a data generator with all of its parameters
+    so that it can be "rewound" each epoch.
+    """
 
     def __init__(self,
                  generator: Callable[..., Generator[Tuple[np.ndarray, np.ndarray], None, None]],
@@ -96,7 +100,7 @@ class Trainer:
         if eval_generator:
             self.validate_data(eval_generator)
         for epoch in range(epochs):
-            print(f"Epoch {epoch+1}/{epochs}...")
+            print(f"Epoch {epoch+1} of {epochs}...")
             train_loss = []
             train_metrics = {str(metric): [] for metric in self.metrics}
             for features, targets in train_generator():
@@ -117,6 +121,6 @@ class Trainer:
                 # Backward propagation
                 for layer, layer_input in zip(reversed(self.layers), reversed(outputs[:-1])):
                     grad = layer.backward(layer_input, grad)
-            print(self.loss, np.mean(train_loss))
+            print(f"{self.loss}: {np.mean(train_loss)}")
             for metric in self.metrics:
-                print(metric, np.mean(train_metrics[str(metric)]))
+                print(f"{metric}: {np.mean(train_metrics[str(metric)])}")
