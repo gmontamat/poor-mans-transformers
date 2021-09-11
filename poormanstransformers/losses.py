@@ -14,8 +14,9 @@ class Loss:
     representation.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, from_logits: bool = False):
+        """Need to specify whether y_hat are logits or probabilities."""
+        self.from_logits = from_logits
 
     def __call__(self, y: np.ndarray, y_hat: np.ndarray) -> Tuple[float, np.ndarray]:
         """Return loss value and gradients w.r.t. y_hat"""
@@ -28,16 +29,10 @@ class Loss:
 
 class CategoricalCrossEntropy(Loss):
 
-    def __init__(self, from_logits: bool = False):
-        """Need to specify whether y_hat are logits or probabilities.
-        """
-        super(CategoricalCrossEntropy, self).__init__()
-        self.from_logits = from_logits
-
     def __call__(self, y: np.ndarray, y_hat: np.ndarray) -> Tuple[float, np.ndarray]:
         if self.from_logits:
             # y_hat here are log probabilities (logits)
-            # We can avoid having to use np.log by sending logits
+            # We can avoid having to use np.log
             # LogSoftmax is also more numerically stable
             loss = np.mean(-y_hat[y == 1.])
             # TODO: check your lazy math!
@@ -54,8 +49,8 @@ class CategoricalCrossEntropy(Loss):
 
 class Metric:
 
-    def __init__(self):
-        pass
+    def __init__(self, from_logits: bool = False):
+        self.from_logits = from_logits
 
     def __call__(self, y: np.ndarray, y_hat: np.ndarray) -> float:
         """Return computed metric."""
@@ -68,10 +63,9 @@ class Metric:
 
 class Accuracy(Metric):
 
-    def __init__(self):
-        super(Accuracy, self).__init__()
-
     def __call__(self, y: np.ndarray, y_hat: np.ndarray, threshold: float = 0.5) -> float:
+        if self.from_logits:
+            threshold = np.log(threshold)
         return float(np.mean(y == (y_hat > threshold).astype(y.dtype)))
 
     def __str__(self) -> str:
