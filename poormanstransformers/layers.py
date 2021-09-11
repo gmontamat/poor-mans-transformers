@@ -140,7 +140,7 @@ class ReLU(Activation):
 class Softmax(Activation):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        # Shift to negatives to avoid overflow
+        # Shift x to [-inf., 0] to avoid overflow
         # aka. stable softmax
         e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
         return e_x / np.sum(e_x, axis=-1, keepdims=True)
@@ -153,12 +153,13 @@ class Softmax(Activation):
 class LogSoftmax(Activation):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
-        return x - np.sum(x, axis=-1, keepdims=True)
+        # Shift x to [-inf., 0] to avoid overflow
+        x_shifted = x - np.max(x, axis=-1, keepdims=True)
+        return x_shifted - np.log(np.sum(np.exp(x_shifted), axis=-1, keepdims=True))
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
-        # TODO: check your lazy math!
         softmax = np.exp(self.forward(x))
-        return (1. - softmax) * grad
+        return grad + softmax / softmax.shape[0]
 
 
 class Dropout(Activation):

@@ -32,14 +32,12 @@ class CategoricalCrossEntropy(Loss):
     def __call__(self, y: np.ndarray, y_hat: np.ndarray) -> Tuple[float, np.ndarray]:
         if self.from_logits:
             # y_hat here are log probabilities (logits)
-            # We can avoid having to use np.log
-            # LogSoftmax is also more numerically stable
-            loss = np.mean(-y_hat[y == 1.])
-            # TODO: check your lazy math!
-            grad = - y / y.shape[0]
+            # LogSoftmax is more numerically stable
+            loss = -np.mean(np.sum(y * y_hat, axis=-1))
+            grad = -y / y.shape[0]
         else:
-            y_hat = np.clip(y_hat, 1e-15, 1 - 1e-15)  # Avoid division by zero
-            loss = np.mean(np.sum(-y * np.log(y_hat), axis=-1))
+            y_hat = np.clip(y_hat, 1e-15, 1 - 1e-15)  # Avoid overflow
+            loss = -np.mean(np.sum(y * np.log(y_hat), axis=-1))
             grad = (y_hat - y) / y.shape[0]
         return float(loss), grad
 
