@@ -158,7 +158,7 @@ class LogSoftmax(Activation):
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
         # TODO: check your lazy math!
         softmax = np.exp(self.forward(x))
-        return (1. - softmax(x)) * grad
+        return (1. - softmax) * grad
 
 
 class Dropout(Activation):
