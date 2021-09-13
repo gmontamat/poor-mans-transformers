@@ -103,6 +103,14 @@ The `fit` method in the `Trainer` is the key one in this class. It prepares the 
 :heavy_check_mark: [Trainer](poormanstransformers/train.py#L31)
 :heavy_check_mark: [DataGeneratorWrapper](poormanstransformers/train.py#L15-L28)
 
+#### :warning: Challenges
+
+The most difficult part of this first step was to do the backwards propagation. I needed to compute Jacobian matrices of
+several vector functions. The following articles helped me clarify the math needed:
+
+* [Jacobian, Chain rule and backpropagation](https://suzyahyah.github.io/calculus/machine%20learning/2018/04/04/Jacobian-and-Backpropagation.html)
+* [The Softmax function and its derivative](https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/)
+
 #### :construction: Sample code
 
 :heavy_check_mark: MLP for MNIST Digit recognition
