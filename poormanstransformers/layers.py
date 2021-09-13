@@ -70,6 +70,8 @@ class Layer:
         If your layer has parameters (e.g. dense layer), you also need to update them here using d_loss / d_layer
         """
         # The gradient of a dummy layer is precisely grad, but we'll write it more explicitly
+        # In general, we need to compute the Jacobian of the forward function and return its dot
+        # product with `grad`
         num_units = x.shape[1]
         d_layer_d_input = np.eye(num_units)
         return np.dot(grad, d_layer_d_input)
@@ -82,6 +84,7 @@ class Activation(Layer):
 
     def __init__(self, input_shape: Optional[Tuple[Optional[int], ...]] = None):
         super(Activation, self).__init__(input_shape=input_shape, output_shape=input_shape)
+        self.last_output = None  # Activations need the last forwards to do backpropagation
 
     def initialize(self):
         self.output_shape = self.input_shape
@@ -143,11 +146,19 @@ class Softmax(Activation):
         # Shift x to [-inf., 0] to avoid overflow
         # aka. stable softmax
         e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
-        return e_x / np.sum(e_x, axis=-1, keepdims=True)
+        self.last_output = e_x / np.sum(e_x, axis=-1, keepdims=True)
+        return self.last_output
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
-        p = self.forward(x)
-        return p * (1. - p) * grad
+        # Compute Jacobian for each batch since full matrix is sparse
+        grad_x = np.zeros_like(grad)
+        for batch in range(self.last_output.shape[0]):
+            # Jacobian for a single sample in batch is:
+            # Si - SiSj if i==j or else -SiSj
+            s = self.last_output[batch]
+            jac = -np.outer(s, s) + np.diag(s)
+            grad_x[batch] = np.dot(grad[batch], jac)
+        return grad_x
 
 
 class LogSoftmax(Activation):
@@ -155,11 +166,19 @@ class LogSoftmax(Activation):
     def forward(self, x: np.ndarray) -> np.ndarray:
         # Shift x to [-inf., 0] to avoid overflow
         x_shifted = x - np.max(x, axis=-1, keepdims=True)
-        return x_shifted - np.log(np.sum(np.exp(x_shifted), axis=-1, keepdims=True))
+        self.last_output = x_shifted - np.log(np.sum(np.exp(x_shifted), axis=-1, keepdims=True))
+        return self.last_output
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
-        softmax = np.exp(self.forward(x))
-        return grad + softmax / softmax.shape[0]
+        softmax = np.exp(self.last_output)
+        s_dim = softmax.shape[1]
+        grad_x = np.zeros_like(grad)
+        for batch in range(self.last_output.shape[0]):
+            # Jacobian for a single sample in batch is:
+            # 1 - Si if i==j or else -Si
+            jac = np.eye(s_dim) - softmax[batch, np.newaxis]
+            grad_x[batch] = np.dot(grad[batch], jac)
+        return grad_x
 
 
 class Dropout(Activation):
@@ -171,14 +190,13 @@ class Dropout(Activation):
         self.rate = rate
         self.factor = 1. / (1. - rate)
         self.mode = mode
-        self.last_forwards = None
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         if self.mode == 'train':
-            self.last_forwards = (np.random.random(x.shape) > self.rate).astype(np.float32)
-            return np.multiply(self.last_forwards, x) * self.factor
+            self.last_output = (np.random.random(x.shape) > self.rate).astype(np.float32)
+            return self.last_output * x * self.factor
         return x
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
-        assert self.last_forwards is not None, "Do forward pass before backward"
-        return np.multiply(self.last_forwards, grad) * self.factor
+        assert self.last_output is not None, "Do forward pass before backward"
+        return self.last_output * grad * self.factor

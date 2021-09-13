@@ -38,7 +38,7 @@ class CategoricalCrossEntropy(Loss):
         else:
             y_hat = np.clip(y_hat, 1e-15, 1 - 1e-15)  # Avoid overflow
             loss = -np.mean(np.sum(y * np.log(y_hat), axis=-1))
-            grad = (y_hat - y) / y.shape[0]
+            grad = -y / y_hat / y.shape[0]
         return float(loss), grad
 
     def __str__(self) -> str:
