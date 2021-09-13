@@ -55,13 +55,13 @@ model initialization step. The initial weights of each `Parameter` also need to 
 
 An `Activation` is a special type of `Layer` whose `input_shape` and `output_shape` are the same.
 
-:heavy_check_mark: [Layer](poormanstransformers/layers.py#L32-L75)
-:heavy_check_mark: [Activation](poormanstransformers/layers.py#L78-L87)
-:white_check_mark: [Dense](poormanstransformers/layers.py#L90-L128)
-:white_check_mark: [ReLU](poormanstransformers/layers.py#L131-L137)
-:white_check_mark: [Softmax](poormanstransformers/layers.py#L140-L150)
-:white_check_mark: [LogSoftmax](poormanstransformers/layers.py#L153-L161)
-:white_check_mark: [Dropout](poormanstransformers/layers.py#L164-L183)
+:heavy_check_mark: [Layer](poormanstransformers/layers.py#L32-L77)
+:heavy_check_mark: [Activation](poormanstransformers/layers.py#L80-L90)
+:white_check_mark: [Dense](poormanstransformers/layers.py#L93-L131)
+:white_check_mark: [ReLU](poormanstransformers/layers.py#L134-L140)
+:white_check_mark: [Softmax](poormanstransformers/layers.py#L143-L161)
+:white_check_mark: [LogSoftmax](poormanstransformers/layers.py#L164-L181)
+:white_check_mark: [Dropout](poormanstransformers/layers.py#L184-L202)
 
 #### :pushpin: Parameter and Optimizer
 
@@ -85,9 +85,9 @@ prediction's probabilities *logits*) and return the calculated metric. The `Loss
 `d_loss / d_yhat` to begin the backward propagation.
 
 :heavy_check_mark: [Loss](poormanstransformers/losses.py#L6-L27)
-:heavy_check_mark: [Metric](poormanstransformers/losses.py#L50-L61)
-:white_check_mark: [CategoricalCrossEntropy](poormanstransformers/losses.py#L30-L47)
-:white_check_mark: [Accuracy](poormanstransformers/losses.py#L64-L72)
+:heavy_check_mark: [Metric](poormanstransformers/losses.py#L48-L59)
+:white_check_mark: [CategoricalCrossEntropy](poormanstransformers/losses.py#L30-L45)
+:white_check_mark: [Accuracy](poormanstransformers/losses.py#L62-L70)
 
 #### :pushpin: Model, Trainer, and DataGeneratorWrapper
 
