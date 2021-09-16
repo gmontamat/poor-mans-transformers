@@ -15,7 +15,9 @@ Model = List[Layer]
 class DataGeneratorWrapper:
     """
     Wrap a data generator with all of its parameters
-    so that it can be "rewound" each epoch.
+    so that it can be "rewound" each epoch. Use the
+    generator `.utils.split_in_batches` if the entire
+    dataset is loaded in memory.
     """
 
     def __init__(self,
@@ -39,13 +41,14 @@ class Trainer:
                  model: Model,
                  optimizer: Optimizer,
                  loss: Loss,
-                 metrics: List[Union[Loss, Metric]],
-                 mode: str = 'train'):
+                 metrics: Optional[List[Union[Loss, Metric]]] = None):
         self.layers = model
         self.optimizer = optimizer
         self.loss = loss
-        self.metrics = metrics
-        self.mode = mode
+        if metrics is None:
+            self.metrics = []
+        else:
+            self.metrics = metrics
 
     @staticmethod
     def compare_shapes(shape1: Tuple[Optional[int], ...],
@@ -58,13 +61,16 @@ class Trainer:
         return True
 
     def initialize_layer(self, layer: Layer):
-        if hasattr(layer, 'mode'):
-            setattr(layer, 'mode', self.mode)
         for parameter in layer.get_parameters():
             setattr(parameter, 'optimizer', copy(self.optimizer))
         layer.initialize()
 
-    def prepare_model(self):
+    def set_mode(self, mode: str):
+        for layer in self.layers:
+            if hasattr(layer, 'mode'):
+                setattr(layer, 'mode', mode)
+
+    def compile(self):
         """Ensure input_shape and output_shape are set
         and valid then initialize the layer.
         """
@@ -91,19 +97,20 @@ class Trainer:
         assert self.compare_shapes(targets.shape, self.layers[-1].output_shape), "Output shape is incompatible"
 
     def fit(self,
-            train_generator: DataGeneratorWrapper,
+            train_data: DataGeneratorWrapper,
             epochs: int,
-            eval_generator: Optional[DataGeneratorWrapper] = None):
+            eval_data: Optional[DataGeneratorWrapper] = None):
         """Train model with data passed."""
-        self.prepare_model()
-        self.validate_data(train_generator)
-        if eval_generator:
-            self.validate_data(eval_generator)
+        self.compile()
+        self.validate_data(train_data)
+        if eval_data:
+            self.validate_data(eval_data)
         for epoch in range(epochs):
             print(f"Epoch {epoch+1} of {epochs}...")
+            self.set_mode('train')
             train_loss = []
             train_metrics = {str(metric): [] for metric in self.metrics}
-            for features, targets in train_generator():
+            for features, targets in train_data():
                 outputs = [features]
                 # Forward propagation
                 for layer in self.layers:
@@ -117,10 +124,33 @@ class Trainer:
                         value, _ = metric(targets, outputs[-1])
                     else:
                         value = metric(targets, outputs[-1])
-                    train_metrics[str(metric)] = value
+                    train_metrics[str(metric)].append(value)
                 # Backward propagation
                 for layer, layer_input in zip(reversed(self.layers), reversed(outputs[:-1])):
                     grad = layer.backward(layer_input, grad)
-            print(f"{self.loss}: {np.mean(train_loss)}")
+            print(f"train-{self.loss}: {np.mean(train_loss):.5f}")
             for metric in self.metrics:
-                print(f"{metric}: {np.mean(train_metrics[str(metric)])}")
+                print(f"train-{metric}: {np.mean(train_metrics[str(metric)]):.5f}")
+            # Compute eval metrics
+            if eval_data is None:
+                continue
+            self.set_mode('eval')
+            eval_loss = []
+            eval_metrics = {str(metric): [] for metric in self.metrics}
+            for features, targets in eval_data():
+                outputs = [features]
+                # Forward propagation
+                for layer in self.layers:
+                    outputs.append(layer.forward(outputs[-1]))
+                loss, _ = self.loss(targets, outputs[-1])
+                eval_loss.append(loss)
+                # Compute metrics
+                for metric in self.metrics:
+                    if isinstance(metric, Loss):
+                        value, _ = metric(targets, outputs[-1])
+                    else:
+                        value = metric(targets, outputs[-1])
+                    eval_metrics[str(metric)].append(value)
+            print(f"eval-{self.loss}: {np.mean(eval_loss):.5f}")
+            for metric in self.metrics:
+                print(f"eval-{metric}: {np.mean(eval_metrics[str(metric)]):.5f}")
