@@ -131,3 +131,8 @@ dmypy.json
 # IDE files
 .vscode/
 .idea/
+
+# Datasets
+*.zip
+*.csv
+*.txt
