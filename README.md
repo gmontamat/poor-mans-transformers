@@ -43,10 +43,10 @@ Here's the list of objects I implemented:
 
 A layer performs two operations: forward propagation and backward propagation. For doing the forward pass, it receives
 an input batch `X` and uses its `Parameter`s to compute the output batch. And in the case of the backward pass, it
-receives the accumulated gradient `grad` (which represents `d_loss / d_layer`) to compute and propagate to the previous
-layer: `d_loss / d_input = d_loss / d_layer * d_layer / d_input`. It also receives the input batch `X` used in the
-forward step to compute the gradients with respect to the
-parameters `d_loss / d_parameter = d_loss / d_layer * d_layer / d_parameter`. Next, it calls the `update` method on
+receives the accumulated gradient `grad` (which represents the jacobian `d_loss / d_layer` for each element in the
+batch) to compute and propagate to the previous layer: `d_loss / d_input = d_loss / d_layer · d_layer / d_input`. It
+also receives the input batch `X` used in the forward step to compute the gradients with respect to the
+parameters `d_loss / d_parameter = d_loss / d_layer · d_layer / d_parameter`. Next, it calls the `update` method on
 all `Parameter`s which use an `Optimizer` instance to update their weights. Finally, the accumulated
 gradient `d_loss / d_input` is returned to proceed with the network's backward propagation.
 
@@ -111,11 +111,47 @@ several vector functions. The following articles helped me clarify the math need
 * [Jacobian, Chain rule and backpropagation](https://suzyahyah.github.io/calculus/machine%20learning/2018/04/04/Jacobian-and-Backpropagation.html)
 * [The Softmax function and its derivative](https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/)
 
-#### :construction: Sample code
+#### :gem: Sample code
 
-:heavy_check_mark: MLP for MNIST Digit recognition
+:heavy_check_mark: [MLP for MNIST Digit recognition](./examples/mlp.py)
+```shell
+python ./examples/mlp.py
+```
 
-### :construction: Embedding layer
+### :bookmark: Word Embeddings
 
-My next goal is to have an `Embedding` layer implemented. Even try to train a Continuous Bag of Words (CBOW) model and
-replicate [word2vec](https://arxiv.org/pdf/1301.3781.pdf).
+My next goal is to have an `Embedding` layer implemented and try it out with a Continuous Bag of Words (CBOW) model. We
+can replicate embeddings like those in [word2vec](https://arxiv.org/pdf/1301.3781.pdf). With the framework in place and
+validated with the Multilayer Perceptron trained on MNIST, this part should be a matter of adding the necessary
+subclasses and helper functions.
+
+#### :pushpin: Embedding
+
+The `Embedding` layer is equivalent to a `Dense` layer if we converted the word representations (numbers in the range
+`[0, vocab_size)`) to their one-hot representation and performed a matrix-matrix dot product between the input and
+weights. Here instead, the layer takes the word representation (integer between 0 and `vocab_size-1`) and use it to
+index the weights' matrix. We avoid doing a matrix-matrix dot product which is more expensive.
+
+#### :pushpin: AxisMean
+
+The CBOW model works by averaging the embeddings of a context window surrounding the target word. The dimension average
+is usually done by a `Lambda` layer which takes a lambda function and use it as the forward propagation step. Frameworks
+have tools like [autograd](https://github.com/HIPS/autograd) to compute a gradient (formally, *jacobian*) given the
+forward function. For simplicity, I created the `AxisMean` layer instead of a `Lambda` layer which doesn't require the
+aforementioned tool.
+
+#### :warning: Challenges
+
+Implementing backpropagation for the `Embedding` layer was a bit tricky but not as hard as other layers. The following
+resources guided me through this step:
+
+* [What is the difference between an Embedding Layer and a Dense Layer?](https://stackoverflow.com/questions/47868265/what-is-the-difference-between-an-embedding-layer-and-a-dense-layer)
+* [Implementing Deep Learning Methods and Feature Engineering for Text Data: The Continuous Bag of Words (CBOW)](https://www.kdnuggets.com/2018/04/implementing-deep-learning-methods-feature-engineering-text-data-cbow.html)
+* [Back propagation in an embedding layer](https://medium.com/@ilyarudyak/back-propagation-in-an-embedding-layer-30382fa7f023)
+
+#### :gem: Sample code
+
+:heavy_check_mark: [Continuous Bag of Words (CBOW) with Wikipedia Sentences](./examples/cbow.py)
+```shell
+python ./examples/cbow.py
+```

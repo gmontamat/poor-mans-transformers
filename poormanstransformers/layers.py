@@ -65,7 +65,7 @@ class Layer:
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
         """Perform backpropagation step through the layer with respect to a given input (x).
         To compute loss gradients w.r.t x, you need to apply chain rule:
-        d_loss / d_x  = (d_loss / d_layer) * (d_layer / d_x)
+        d_loss / d_x  = (d_loss / d_layer) · (d_layer / d_x)
         Luckily, you already receive d_loss / d_layer as `grad`, so you only need to multiply it by d_layer / d_x.
         If your layer has parameters (e.g. dense layer), you also need to update them here using d_loss / d_layer
         """
@@ -123,7 +123,7 @@ class Dense(Layer):
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
         """Compute d_loss / d_W and d_loss / d_b to update parameters
-        and return d_loss / d_x = d_loss / d_dense * d_dense / d_x"""
+        and return d_loss / d_x = d_loss / d_dense · d_dense / d_x"""
         W, b = self.W(), self.b()
         grad_x = np.dot(grad, W.T)
         self.W.update(np.dot(x.T, grad))
@@ -200,3 +200,61 @@ class Dropout(Activation):
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
         assert self.last_output is not None, "Do forward pass before backward"
         return self.last_output * grad * self.factor
+
+
+class Embedding(Layer):
+    """
+    Turn positive integers (indexes) into dense vectors of fixed size.
+    e.g. [[4], [20]] -> [[0.25, 0.1], [0.6, -0.2]]
+    This layer can only be used as the first layer in a model.
+    """
+
+    def __init__(self, vocab_size: int, d_feature: int, input_length: Optional[int] = None):
+        super(Embedding, self).__init__((None, input_length), (None, input_length, d_feature))
+        self.weights_shape = (vocab_size, d_feature)
+        self.W = Parameter()
+
+    def initialize(self):
+        setattr(self.W, 'weights', np.random.uniform(-0.05, 0.05, size=self.weights_shape))
+
+    def save(self, file_name: str):
+        """Save embeddings for future usage."""
+        if file_name[-4:] != '.npy':
+            file_name += '.npy'
+        np.save(file_name, self.W())
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """Use inputs as indexes to avoid matrix-matrix multiplication."""
+        return self.W()[x]
+
+    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        dW = np.zeros_like(self.W())
+        np.add.at(dW, x, grad)  # Below we give the loop version
+        # reshaped_grad = np.reshape(grad, (x.shape[0] * x.shape[1], -1))
+        # for index, g in zip(x.flatten(), reshaped_grad):
+        #     dW[index] += g
+        self.W.update(dW)
+        return np.empty_like(x)  # Should not be propagated
+
+
+class AxisMean(Layer):
+    """
+    This layer is usually implemented as a Lambda layer in popular frameworks:
+    e.g. model.add(keras.layers.Lambda(lambda x: keras.backend.mean(x, axis=1)))
+    Here, we don't have a method to compute gradients, so we specify the forward
+    and backwards step manually.
+    """
+
+    def __init__(self, axis: int, input_shape: Optional[Tuple[Optional[int], ...]] = None):
+        super(AxisMean, self).__init__(input_shape, None)
+        self.axis = axis
+
+    def initialize(self):
+        assert self.input_shape is not None, "Cannot initialize DimensionMean without `input_shape`."
+        self.output_shape = self.input_shape[:self.axis] + self.input_shape[self.axis + 1:]
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        return np.mean(x, axis=self.axis)
+
+    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        return np.repeat(np.expand_dims(grad / x.shape[self.axis], axis=self.axis), x.shape[self.axis], axis=self.axis)
