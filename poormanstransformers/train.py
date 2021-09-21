@@ -2,6 +2,7 @@ import numpy as np
 
 from copy import copy
 from typing import Callable, Dict, Generator, List, Optional, Tuple, Union
+from tqdm import tqdm
 
 from .layers import Layer, Parameter
 from .losses import Loss, Metric
@@ -22,8 +23,10 @@ class DataGeneratorWrapper:
 
     def __init__(self,
                  generator: Callable[..., Generator[Tuple[np.ndarray, np.ndarray], None, None]],
+                 total_batches: Optional[int] = None,
                  **kwargs):
         self.generator = generator
+        self.total_batches = total_batches
         self.kwargs = kwargs
 
     def __call__(self) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
@@ -110,7 +113,7 @@ class Trainer:
             self.set_mode('train')
             train_loss = []
             train_metrics = {str(metric): [] for metric in self.metrics}
-            for features, targets in train_data():
+            for features, targets in tqdm(train_data(), total=train_data.total_batches):
                 outputs = [features]
                 # Forward propagation
                 for layer in self.layers:
