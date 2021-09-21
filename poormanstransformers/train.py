@@ -30,7 +30,7 @@ class DataGeneratorWrapper:
         self.kwargs = kwargs
 
     def __call__(self) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
-        return self.generator(**self.kwargs)
+        return self.generator(**self.kwargs, total_batches=self.total_batches)
 
 
 class Trainer:
