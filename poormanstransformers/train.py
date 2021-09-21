@@ -1,6 +1,7 @@
 import numpy as np
 
 from copy import copy
+from inspect import getfullargspec
 from typing import Callable, Dict, Generator, List, Optional, Tuple, Union
 from tqdm import tqdm
 
@@ -28,9 +29,11 @@ class DataGeneratorWrapper:
         self.generator = generator
         self.total_batches = total_batches
         self.kwargs = kwargs
+        if 'total_batches' in getfullargspec(self.generator).args:
+            self.kwargs['total_batches'] = total_batches
 
     def __call__(self) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
-        return self.generator(**self.kwargs, total_batches=self.total_batches)
+        return self.generator(**self.kwargs)
 
 
 class Trainer:
