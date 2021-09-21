@@ -58,7 +58,11 @@ if __name__ == '__main__':
         Dense(10),
         LogSoftmax()
     ]
-    train_data = DataGeneratorWrapper(split_in_batches, features=X_train / 255, targets=y_train)
+    batch_size = 32
+    train_data = DataGeneratorWrapper(
+        split_in_batches, batch_size=batch_size, features=X_train / 255, targets=y_train,
+        total_batches=len(X_train) // batch_size
+    )
     eval_data = DataGeneratorWrapper(split_in_batches, features=X_eval / 255, targets=y_eval)
     trainer = Trainer(
         model=mlp,
