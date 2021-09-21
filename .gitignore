@@ -132,9 +132,10 @@ dmypy.json
 .vscode/
 .idea/
 
-# Datasets
+# Datasets and savefiles
 *.zip
 *.csv
 *.txt
 *.pkl
+*.npy
 !requirements.txt
