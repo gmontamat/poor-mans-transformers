@@ -97,8 +97,11 @@ with stack operations). Hence, I defined the `Trainer` which receives a model, o
 early stopping, and metrics to run the supervised training with training and evaluation data generators. This approach
 resembles the Trax framework more than Keras or PyTorch.
 
-The `fit` method in the `Trainer` is the key one in this class. It prepares the model by setting and validating the
-`input_shape` and `output_shape` for every layer, and initializing the layer's weights. Next, given a.
+The `fit` method in `Trainer` is the key function of this class. It prepares the model by setting and validating the
+`input_shape` and `output_shape` for every layer, and initializing the layer's weights. Training and evaluation data is
+passed via a generator function that has to be written for every particular dataset and needs to be wrapped using the
+`DataGeneratorWrapper` whose only purpose is to initialize the generator with all the arguments passed so that the
+data could be "rewound" at the beginning of each epoch.
 
 :heavy_check_mark: [Trainer](poormanstransformers/train.py#L31)
 :heavy_check_mark: [DataGeneratorWrapper](poormanstransformers/train.py#L15-L28)
