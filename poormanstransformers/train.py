@@ -72,8 +72,8 @@ class Trainer:
                 setattr(layer, 'mode', mode)
 
     def compile(self):
-        """Ensure input_shape and output_shape are set
-        and valid then initialize the layer.
+        """For each layer, ensure input_shape and output_shape
+        are defined and valid, then initialize the layer.
         """
         if not hasattr(self.layers[0], 'input_shape'):
             raise AttributeError("`input_shape` not defined for the first layer.")
