@@ -103,8 +103,8 @@ passed via a generator function that has to be written for every particular data
 `DataGeneratorWrapper` whose only purpose is to initialize the generator with all the arguments passed so that the
 data could be "rewound" at the beginning of each epoch.
 
-:heavy_check_mark: [Trainer](poormanstransformers/train.py#L31)
-:heavy_check_mark: [DataGeneratorWrapper](poormanstransformers/train.py#L15-L28)
+:heavy_check_mark: [Trainer](poormanstransformers/train.py#L34)
+:heavy_check_mark: [DataGeneratorWrapper](poormanstransformers/train.py#L16-L31)
 
 #### :warning: Challenges
 
@@ -135,6 +135,8 @@ The `Embedding` layer is equivalent to a `Dense` layer if we converted the word 
 weights. Here instead, the layer takes the word representation (integer between 0 and `vocab_size-1`) and use it to
 index the weights' matrix. We avoid doing a matrix-matrix dot product which is more expensive.
 
+:white_check_mark: [Embedding](poormanstransformers/layers.py#L205-L237)
+
 #### :pushpin: AxisMean
 
 The CBOW model works by averaging the embeddings of a context window surrounding the target word. The dimension average
@@ -142,6 +144,12 @@ is usually done by a `Lambda` layer which takes a lambda function and use it as 
 have tools like [autograd](https://github.com/HIPS/autograd) to compute a gradient (formally, *jacobian*) given the
 forward function. For simplicity, I created the `AxisMean` layer instead of a `Lambda` layer which doesn't require the
 aforementioned tool.
+
+:white_check_mark: [AxisMean](poormanstransformers/layers.py#L240-L260)
+
+#### :construction: RMSProp
+
+WIP
 
 #### :warning: Challenges
 
