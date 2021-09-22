@@ -1,7 +1,6 @@
 import numpy as np
 
 from copy import copy
-from inspect import getfullargspec
 from typing import Callable, Dict, Generator, List, Optional, Tuple, Union
 from tqdm import tqdm
 
@@ -24,13 +23,9 @@ class DataGeneratorWrapper:
 
     def __init__(self,
                  generator: Callable[..., Generator[Tuple[np.ndarray, np.ndarray], None, None]],
-                 total_batches: Optional[int] = None,
                  **kwargs):
         self.generator = generator
-        self.total_batches = total_batches
         self.kwargs = kwargs
-        if 'total_batches' in getfullargspec(self.generator).args:
-            self.kwargs['total_batches'] = total_batches
 
     def __call__(self) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
         return self.generator(**self.kwargs)
@@ -105,7 +100,8 @@ class Trainer:
     def fit(self,
             train_data: DataGeneratorWrapper,
             epochs: int,
-            eval_data: Optional[DataGeneratorWrapper] = None):
+            eval_data: Optional[DataGeneratorWrapper] = None,
+            batches_per_epoch: Optional[int] = None):
         """Train model with data passed."""
         self.compile()
         self.validate_data(train_data)
@@ -116,7 +112,7 @@ class Trainer:
             self.set_mode('train')
             train_loss = []
             train_metrics = {str(metric): [] for metric in self.metrics}
-            for features, targets in tqdm(train_data(), total=train_data.total_batches):
+            for features, targets in tqdm(train_data(), total=batches_per_epoch):
                 outputs = [features]
                 # Forward propagation
                 for layer in self.layers:

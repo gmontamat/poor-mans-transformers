@@ -59,15 +59,12 @@ if __name__ == '__main__':
         LogSoftmax()
     ]
     batch_size = 32
-    train_data = DataGeneratorWrapper(
-        split_in_batches, batch_size=batch_size, features=X_train / 255, targets=y_train,
-        total_batches=len(X_train) // batch_size
-    )
-    eval_data = DataGeneratorWrapper(split_in_batches, features=X_eval / 255, targets=y_eval)
+    train_data = DataGeneratorWrapper(split_in_batches, batch_size=batch_size, features=X_train / 255, targets=y_train)
+    eval_data = DataGeneratorWrapper(split_in_batches, batch_size=batch_size, features=X_eval / 255, targets=y_eval)
     trainer = Trainer(
         model=mlp,
         optimizer=Adam(),
         loss=CategoricalCrossEntropy(from_logits=True),
         metrics=[Accuracy(from_logits=True)]
     )
-    trainer.fit(train_data, epochs=5, eval_data=eval_data)
+    trainer.fit(train_data, epochs=5, eval_data=eval_data, batches_per_epoch=len(X_train) // batch_size)
