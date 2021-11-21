@@ -150,9 +150,12 @@ aforementioned tool.
 
 :white_check_mark: [AxisMean](poormanstransformers/layers.py#L240-L260)
 
-#### :construction: RMSProp
+#### :pushpin: RMSProp
 
-WIP
+This optimizer was easy to implement. Just need to keep a moving average of the element-wise squared gradient and
+compute its squared root to update the weights.
+
+:white_check_mark: [RMSProp](poormanstransformers/optimizers.py#L46-L65)
 
 #### :warning: Challenges
 
