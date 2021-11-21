@@ -41,3 +41,25 @@ class Adam(Optimizer):
         m_hat = self.m / (1. - self.beta1 ** self.t)
         v_hat = self.v / (1. - self.beta2 ** self.t)
         return weights - self.learning_rate * m_hat / (np.sqrt(v_hat) + self.eps)
+
+
+class RMSProp(Optimizer):
+    """
+    Reference:
+        - https://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf
+        - https://paperswithcode.com/method/rmsprop
+    """
+
+    def __init__(self, learning_rate: float = 0.001,
+                 gamma: float = 0.9, epsilon: float = 1e-8):
+        super(RMSProp, self).__init__()
+        self.learning_rate = learning_rate
+        self.gamma = gamma
+        self.moving_sqgrad = None
+        self.eps = epsilon
+
+    def __call__(self, weights: np.ndarray, grad: np.ndarray):
+        if self.moving_sqgrad is None:
+            self.moving_sqgrad = np.zeros_like(grad)
+        self.moving_sqgrad = self.gamma * self.moving_sqgrad + (1 - self.gamma) * np.power(grad, 2)
+        return weights - self.learning_rate * grad / np.sqrt(self.moving_sqgrad + self.eps)
