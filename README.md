@@ -2,9 +2,9 @@
 
 Advanced Deep Learning from the ground-up.
 
-The idea of this repository is to implement all the necessary layers of a transformer using only `numpy` for learning
-purposes. The final goal is to train a Transformer model on [QQP](https://www.kaggle.com/c/quora-question-pairs) or a
-model that performs NER decently. I was inspired by
+The idea of this repository is to implement all the necessary layers of a transformer using just `numpy` for learning
+purposes. The end goal is to train a Transformer model on [QQP](https://www.kaggle.com/c/quora-question-pairs) or a
+model that performs Named Entity Recognition (NER) decently. I was inspired by
 [ML-From-Scratch](https://github.com/eriklindernoren/ML-From-Scratch),
 the [Advanced Machine Learning Specialization](https://www.coursera.org/specializations/aml), and
 the [Natural Language Processing Specialization](https://www.coursera.org/specializations/natural-language-processing).
@@ -25,17 +25,19 @@ course.
 Even though this was supposed to be an easy step, I ended up spending a lot of time on it trying to come up with the
 simplest OOP architecture possible. New layers have to be easy to code, and I also want to experiment with different
 optimizers (SGD, Adam, RMSProp), learning rate schedules, activation functions (ReLU, tanh, sigmoid, Softmax,
-LogSoftmax), custom loss functions (sum binary cross-entropy and categorical cross-entropy as they do in BERT) and
-handle input & output flow (serial, parallel, concatenations). At the same time, I wouldn't like to waste time building
-a flexible and feature-rich framework since we have PyTorch, TensorFlow with Keras,
-and [Google Trax](https://github.com/google/trax) for that.
+LogSoftmax), custom loss functions (sum binary cross-entropy and categorical cross-entropy as used for training BERT)
+and handle input & output flow (serial, parallel, concatenations). At the same time, I wouldn't like to waste time
+building a flexible and feature-rich framework since we already have PyTorch, TensorFlow with Keras,
+[JAX](https://github.com/google/jax), and [Google Trax](https://github.com/google/trax) for that.
 
-To keep this toy "framework" as simple as possible, I want to minimize the number of base-classes. I ended up with:
+To keep this toy "framework" as simple as possible, I want to minimize the number of base classes. I ended up with:
 `Layer`, `Parameter` (used in a `Layer` with an associated `Optimizer`), `Trainer`, and `Loss`. `Activation` functions
-are a subclass of a `Layer` object. This simplification comes with its costs, of course, in terms of memory usage: more
-"intermediate" tensors will be stored. When using `Dense` and `ReLU`, for example, both the linear combination vector
-and the rectified (`max(X, 0)`) vectors will be stored in memory. I do not intend to run it on a GPU, so RAM is not a
-big concern right now.
+are a subclass of a `Layer` object. This simplification comes with its costs, of course, in terms of RAM usage: more
+"intermediate" tensors will be stored in memory. When training a `Dense` layer with a `ReLU` activation, for example,
+both the linear combination and the rectified (`max(X, 0)`) tensors will be stored in memory. I do not intend to run
+this framework on a GPU, so RAM usage is not a big concern right now. Each layer will implement its backpropagation
+step, the derivatives with respect to each parameter (Jacobian matrix) have to be computed because I don't want to
+implement a tool such as [Autograd](https://github.com/hips/autograd) to do this automatically.
 
 Here's the list of objects I implemented:
 
@@ -43,15 +45,15 @@ Here's the list of objects I implemented:
 
 A layer performs two operations: forward propagation and backward propagation. For doing the forward pass, it receives
 an input batch `X` and uses its `Parameter`s to compute the output batch. And in the case of the backward pass, it
-receives the accumulated gradient `grad` (which represents the jacobian `d_loss / d_layer` for each element in the
+receives the accumulated gradient `grad` (which represents the derivatives `d_loss / d_layer` for each element in the
 batch) to compute and propagate to the previous layer: `d_loss / d_input = d_loss / d_layer · d_layer / d_input`. It
 also receives the input batch `X` used in the forward step to compute the gradients with respect to the
 parameters `d_loss / d_parameter = d_loss / d_layer · d_layer / d_parameter`. Next, it calls the `update` method on
 all `Parameter`s which use an `Optimizer` instance to update their weights. Finally, the accumulated
 gradient `d_loss / d_input` is returned to proceed with the network's backward propagation.
 
-When instantiated, an `input_shape` and `output_shape` can be defined, or they will be set by the `Trainer` during the
-model initialization step. The initial weights of each `Parameter` also need to be defined during this step.
+When instantiated, an `input_shape` and `output_shape` could be set, or else they will be set by the `Trainer` during
+the model's initialization step. The initial weights of each `Parameter` also need to be defined during this step.
 
 An `Activation` is a special type of `Layer` whose `input_shape` and `output_shape` are the same.
 
@@ -100,8 +102,8 @@ resembles the Trax framework more than Keras or PyTorch.
 The `fit` method in `Trainer` is the key function of this class. It prepares the model by setting and validating the
 `input_shape` and `output_shape` for every layer, and initializing the layer's weights. Training and evaluation data is
 passed via a generator function that has to be written for every particular dataset and needs to be wrapped using the
-`DataGeneratorWrapper` whose only purpose is to initialize the generator with all the arguments passed so that the
-data could be "rewound" at the beginning of each epoch.
+`DataGeneratorWrapper` whose only purpose is to initialize the generator with all the arguments passed so that the data
+could be "rewound" at the beginning of each epoch.
 
 :heavy_check_mark: [Trainer](poormanstransformers/train.py#L34)
 :heavy_check_mark: [DataGeneratorWrapper](poormanstransformers/train.py#L16-L31)
@@ -117,6 +119,7 @@ several vector functions. The following articles helped me clarify the math need
 #### :gem: Sample code
 
 :heavy_check_mark: [MLP for MNIST Digit recognition](./examples/mlp.py)
+
 ```shell
 python ./examples/mlp.py
 ```
@@ -153,8 +156,8 @@ WIP
 
 #### :warning: Challenges
 
-Implementing backpropagation for the `Embedding` layer was a bit tricky but not as hard as other layers. The following
-resources guided me through this step:
+Implementing backpropagation for the `Embedding` layer was a bit tricky but not as hard as the Softmax and LogSoftmax
+layers. The following resources guided me through this step:
 
 * [What is the difference between an Embedding Layer and a Dense Layer?](https://stackoverflow.com/questions/47868265/what-is-the-difference-between-an-embedding-layer-and-a-dense-layer)
 * [Implementing Deep Learning Methods and Feature Engineering for Text Data: The Continuous Bag of Words (CBOW)](https://www.kdnuggets.com/2018/04/implementing-deep-learning-methods-feature-engineering-text-data-cbow.html)
@@ -163,6 +166,7 @@ resources guided me through this step:
 #### :gem: Sample code
 
 :heavy_check_mark: [Continuous Bag of Words (CBOW) with Wikipedia Sentences](./examples/cbow.py)
+
 ```shell
 python ./examples/cbow.py
 ```
