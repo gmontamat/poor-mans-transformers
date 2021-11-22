@@ -152,8 +152,8 @@ aforementioned tool.
 
 #### :pushpin: RMSProp
 
-This optimizer was easy to implement. Just need to keep a moving average of the element-wise squared gradient and
-compute its squared root to update the weights.
+Implementing this optimizer is straightforward. Just need to keep a moving average of the element-wise squared gradient
+and use its squared root when updating the weights.
 
 :white_check_mark: [RMSProp](poormanstransformers/optimizers.py#L46-L65)
 
