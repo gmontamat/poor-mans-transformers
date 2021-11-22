@@ -55,11 +55,11 @@ class RMSProp(Optimizer):
         super(RMSProp, self).__init__()
         self.learning_rate = learning_rate
         self.gamma = gamma
-        self.moving_sqgrad = None
+        self.mean_square = None
         self.eps = epsilon
 
     def __call__(self, weights: np.ndarray, grad: np.ndarray):
-        if self.moving_sqgrad is None:
-            self.moving_sqgrad = np.zeros_like(grad)
-        self.moving_sqgrad = self.gamma * self.moving_sqgrad + (1 - self.gamma) * np.power(grad, 2)
-        return weights - self.learning_rate * grad / np.sqrt(self.moving_sqgrad + self.eps)
+        if self.mean_square is None:
+            self.mean_square = np.zeros_like(grad)
+        self.mean_square = self.gamma * self.mean_square + (1 - self.gamma) * np.power(grad, 2)
+        return weights - self.learning_rate * grad / np.sqrt(self.mean_square + self.eps)
