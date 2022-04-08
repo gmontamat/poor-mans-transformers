@@ -27,6 +27,20 @@ class Loss:
         raise NotImplementedError()
 
 
+class Metric:
+
+    def __init__(self, from_logits: bool = False):
+        self.from_logits = from_logits
+
+    def __call__(self, y: np.ndarray, y_hat: np.ndarray) -> float:
+        """Return computed metric."""
+        raise NotImplementedError()
+
+    def __str__(self) -> str:
+        """Print metric name."""
+        raise NotImplementedError()
+
+
 class CategoricalCrossEntropy(Loss):
 
     def __call__(self, y: np.ndarray, y_hat: np.ndarray) -> Tuple[float, np.ndarray]:
@@ -57,20 +71,6 @@ class BinaryCrossEntropy(Loss):
 
     def __str__(self) -> str:
         return "binary-cross-entropy"
-
-
-class Metric:
-
-    def __init__(self, from_logits: bool = False):
-        self.from_logits = from_logits
-
-    def __call__(self, y: np.ndarray, y_hat: np.ndarray) -> float:
-        """Return computed metric."""
-        raise NotImplementedError()
-
-    def __str__(self) -> str:
-        """Print metric name."""
-        raise NotImplementedError()
 
 
 class Accuracy(Metric):
