@@ -1,6 +1,6 @@
 import numpy as np
 
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 from .optimizers import Optimizer
 
@@ -129,36 +129,6 @@ class Dense(Layer):
         self.W.update(np.dot(x.T, grad))
         self.b.update(np.dot(np.ones((x.shape[0],)), grad))
         return grad_x
-
-
-class Conv2D(Layer):
-    """
-    2D convolution layer (e.g. spatial convolution over images).
-    """
-
-    def __init__(self, filters: int, kernel_size: Union[Tuple[int, int], int], strides: Union[Tuple[int, int], int],
-                 padding: str, bias: bool = True):
-        super(Conv2D, self).__init__()
-
-    def initialize(self):
-        """Initialize parameters using Xavier initialization (aka. glorot_uniform).
-        """
-        assert self.input_shape is not None, "`input_shape` must be specified if it is the first layer in the network."
-        input_units = self.input_shape[1]
-
-    def forward(self, x: np.ndarray) -> np.ndarray:
-        """
-        Perform an affine transformation:
-        f(x) = <W*x> + b
-        input shape: [batch, input_units]
-        output shape: [batch, n_units]
-        """
-        pass
-
-    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
-        """Compute d_loss / d_W and d_loss / d_b to update parameters
-        and return d_loss / d_x = d_loss / d_dense · d_dense / d_x"""
-        pass
 
 
 class ReLU(Activation):
@@ -322,5 +292,5 @@ class AxisDot(Layer):
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
         if self.axis == 2 or self.axis == -1:
-            return self.last_input[:, :, ::-1] * grad  # TODO: fixme
+            return self.last_input[:, :, ::-1] * np.repeat(np.expand_dims(grad, axis=-1), 2, axis=-1)
         return self.last_input[:, ::-1, :] * np.expand_dims(np.repeat(grad, 2, axis=-1), axis=-1)
