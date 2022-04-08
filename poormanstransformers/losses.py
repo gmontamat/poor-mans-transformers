@@ -45,6 +45,20 @@ class CategoricalCrossEntropy(Loss):
         return "categorical-cross-entropy"
 
 
+class BinaryCrossEntropy(Loss):
+
+    def __call__(self, y: np.ndarray, y_hat: np.ndarray) -> Tuple[float, np.ndarray]:
+        if self.from_logits:
+            raise NotImplementedError()
+        else:
+            loss = -np.mean(y * np.log(y_hat) + (1. - y) * np.log(1. - y_hat))
+            grad = (y_hat - y) / (y_hat * (1. - y_hat)) / y.shape[0]
+        return float(loss), grad
+
+    def __str__(self) -> str:
+        return "binary-cross-entropy"
+
+
 class Metric:
 
     def __init__(self, from_logits: bool = False):

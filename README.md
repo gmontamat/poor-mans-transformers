@@ -124,12 +124,27 @@ several vector functions. The following articles helped me clarify the math need
 python ./examples/mlp.py
 ```
 
-### :bookmark: Word Embeddings
+### :construction: Word Embeddings (work in progress)
 
-My next goal is to have an `Embedding` layer implemented and try it out with a Continuous Bag of Words (CBOW) model. We
-can replicate embeddings like those in [word2vec](https://arxiv.org/pdf/1301.3781.pdf). With the framework in place and
-validated with the Multilayer Perceptron trained on MNIST, this part should be a matter of adding the necessary
-subclasses and helper functions.
+My next goal is to have an `Embedding` layer implemented and try it out by replicating
+[word2vec](https://code.google.com/archive/p/word2vec/) models using both the Continuous Bag of Words (CBOW) and
+Skip-Gram architectures. We should be able to generate word embeddings and compare their accuracy on the Semantic-
+Syntactic Word Relationship test set mentioned in [word2vec's paper](https://arxiv.org/pdf/1301.3781.pdf).
+
+With the framework in place and validated with the Multilayer Perceptron trained on MNIST, this part should have been a
+matter of adding some subclasses and helper functions... but it wasn't. A very basic example with the CBOW model was
+created by just adding the `Embedding` and `AxisMean` layers. There were two problems though: first, it's not an exact
+replica of the model architecture since `Softmax` will propagate the gradients for all the words in the vocabulary
+(Hierarchical Softmax is used in word2vec which is also faster). Second, the lack of a `Lambda` layer which computes and
+propagates the gradients of a user-defined forward function is difficult to code (not impossible, but we don't want
+autograd here).
+
+The skip-gram implementation, with negative sampling, is more faithful to its original implementation. But another
+problem arises here: a `Model`, defined as a list of `Layer` objects, doesn't support multiple input branches (we need
+both the target word and the context/negative word to be passed through the same `Embedding` layer and then merge them
+with a dot product). The quick and dirty fix here is to pass both target and context through the `Embedding` layer and
+create a `AxisDot` layer which computes the dot product along the axis whose shape is 2. A `Sigmoid` layer is used here,
+which is a simpler version of the `Softmax` layer.
 
 #### :pushpin: Embedding
 
@@ -163,12 +178,21 @@ Implementing backpropagation for the `Embedding` layer was a bit tricky but not 
 layers. The following resources guided me through this step:
 
 * [What is the difference between an Embedding Layer and a Dense Layer?](https://stackoverflow.com/questions/47868265/what-is-the-difference-between-an-embedding-layer-and-a-dense-layer)
-* [Implementing Deep Learning Methods and Feature Engineering for Text Data: The Continuous Bag of Words (CBOW)](https://www.kdnuggets.com/2018/04/implementing-deep-learning-methods-feature-engineering-text-data-cbow.html)
 * [Back propagation in an embedding layer](https://medium.com/@ilyarudyak/back-propagation-in-an-embedding-layer-30382fa7f023)
 
-#### :gem: Sample code
+As mentioned above, implementing the CBOW and Skip-gram architectures wasn't simple. I followed these articles:
 
-:heavy_check_mark: [Continuous Bag of Words (CBOW) with Wikipedia Sentences](./examples/cbow.py)
+* [Implementing Deep Learning Methods and Feature Engineering for Text Data: The Continuous Bag of Words (CBOW)](https://www.kdnuggets.com/2018/04/implementing-deep-learning-methods-feature-engineering-text-data-cbow.html)
+* [word2vec](https://code.google.com/archive/p/word2vec/)
+* [A word2vec Keras Tutorial (via web.archive.org)](https://web.archive.org/web/20210212061052/https://adventuresinmachinelearning.com/word2vec-keras-tutorial/)
+
+Subsampling and negative sampling formulas used are explained in the following sources:
+
+* [Word2Vec Tutorial Part 2 - Negative Sampling](https://mccormickml.com/2017/01/11/word2vec-tutorial-part-2-negative-sampling/)
+
+#### :construction: Sample code
+
+:heavy_check_mark: [Continuous Bag of Words (CBOW) with Text8](./examples/cbow.py)
 
 ```shell
 python ./examples/cbow.py

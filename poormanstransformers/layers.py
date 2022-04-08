@@ -1,6 +1,6 @@
 import numpy as np
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from .optimizers import Optimizer
 
@@ -131,6 +131,36 @@ class Dense(Layer):
         return grad_x
 
 
+class Conv2D(Layer):
+    """
+    2D convolution layer (e.g. spatial convolution over images).
+    """
+
+    def __init__(self, filters: int, kernel_size: Union[Tuple[int, int], int], strides: Union[Tuple[int, int], int],
+                 padding: str, bias: bool = True):
+        super(Conv2D, self).__init__()
+
+    def initialize(self):
+        """Initialize parameters using Xavier initialization (aka. glorot_uniform).
+        """
+        assert self.input_shape is not None, "`input_shape` must be specified if it is the first layer in the network."
+        input_units = self.input_shape[1]
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """
+        Perform an affine transformation:
+        f(x) = <W*x> + b
+        input shape: [batch, input_units]
+        output shape: [batch, n_units]
+        """
+        pass
+
+    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        """Compute d_loss / d_W and d_loss / d_b to update parameters
+        and return d_loss / d_x = d_loss / d_dense · d_dense / d_x"""
+        pass
+
+
 class ReLU(Activation):
 
     def forward(self, x: np.ndarray) -> np.ndarray:
@@ -138,6 +168,16 @@ class ReLU(Activation):
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
         return (x > 0.).astype(grad.dtype) * grad
+
+
+class Sigmoid(Activation):
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        self.last_output = 1. / (1. + np.exp(-x))
+        return self.last_output
+
+    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        return grad * self.last_output * (1. - self.last_output)
 
 
 class Softmax(Activation):
@@ -258,3 +298,29 @@ class AxisMean(Layer):
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
         return np.repeat(np.expand_dims(grad / x.shape[self.axis], axis=self.axis), x.shape[self.axis], axis=self.axis)
+
+
+class AxisDot(Layer):
+    """
+    Compute dot product of vectors along a certain axis of size 2
+    """
+
+    def __init__(self, axis: int, input_shape: Optional[Tuple[Optional[int], ...]] = None):
+        super(AxisDot, self).__init__(input_shape, None)
+        self.axis = axis
+        self.last_input = None
+
+    def initialize(self):
+        assert self.input_shape is not None, "Cannot initialize DimensionMean without `input_shape`."
+        assert self.input_shape[self.axis] == 2, "Selected axis must have size of 2."
+        assert len(self.input_shape) == 3, "Only 3 dimensions allowed: batch, vector, and number of vectors"
+        self.output_shape = (self.input_shape[0], 1)
+
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        self.last_input = x
+        return np.diag(np.dot(x[:, :, 0], x[:, :, 1].T))[:, np.newaxis]
+
+    def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
+        if self.axis == 2 or self.axis == -1:
+            return self.last_input[:, :, ::-1] * grad  # TODO: fixme
+        return self.last_input[:, ::-1, :] * np.expand_dims(np.repeat(grad, 2, axis=-1), axis=-1)

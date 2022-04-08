@@ -1,7 +1,7 @@
 import numpy as np
 import random
 
-from typing import Generator, List, Optional, Tuple, Union
+from typing import Generator, List, Optional, Tuple, Union, Sequence
 
 
 def to_one_hot(vector: Union[List[int], Tuple[int, ...], np.ndarray],
@@ -33,3 +33,18 @@ def split_in_batches(features: np.ndarray,
     for batch in range(int(features.shape[0] / batch_size)):
         start = batch * batch_size
         yield features[indexes[start:start+batch_size], ...], targets[indexes[start:start+batch_size], ...]
+
+
+def cosine_similarity(x: Union[List[int], Tuple[int, ...], np.ndarray],
+                      y: Union[List[int], Tuple[int, ...], np.ndarray]) -> float:
+    """Compute cosine similarity of 2 vectors."""
+    x = np.array(x).squeeze()
+    y = np.array(y).squeeze()
+    assert len(x.shape) == 1, "First vector is multi-dimensional"
+    assert len(y.shape) == 1, "Second vector is multi-dimensional"
+    assert x.shape == y.shape, "Vector dimensions are not equal"
+    cos = np.dot(x, y) / np.linalg.norm(x) / np.linalg.norm(y)
+    return float(cos)
+
+
+# def generate_projector_files(embeddings: np.ndarray, vocabulary: )
