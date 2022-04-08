@@ -87,8 +87,12 @@ def generate_skipgrams(text_file: str, vocabulary: Dict[str, int], word_counts: 
     with open(text_file) as handler:
         text_sequence = handler.read().lower().split()
     total_batches = 0
+    oov_index = vocabulary[oov_token]
     for pairs, labels in skipgrams(text_sequence, word_counts, window_size, negative_samples, oov_token, batch_size):
-        X = np.array([[vocabulary.get(target, 0), vocabulary.get(context, 0)] for target, context in pairs])
+        X = np.array([
+            [vocabulary.get(target, oov_index), vocabulary.get(context, oov_index)]
+            for target, context in pairs
+        ])
         y = np.array(labels)
         yield X, y
         total_batches += 1
@@ -107,7 +111,7 @@ if __name__ == '__main__':
     embedding_size = 300
     window_size = 10
     negative_samples = 20
-    batch_size = 512
+    batch_size = 2048
     corpus = 'text8'
     try:
         vocabulary, word_counts = create_vocabulary(corpus, size=vocab_size, oov_token=oov_token)
@@ -115,7 +119,7 @@ if __name__ == '__main__':
         print("Download Text8 dataset. Run ./download_text8.sh")
         print(f"File needed: {corpus}")
         sys.exit(0)
-    max_batches = 10000 * batch_size
+    max_batches = batch_size * 100
     assert max_batches < batch_size or max_batches % batch_size == 0
     train_data = DataGeneratorWrapper(
         generate_skipgrams, text_file=corpus, vocabulary=vocabulary, word_counts=word_counts,
@@ -133,6 +137,11 @@ if __name__ == '__main__':
         optimizer=RMSProp(),
         loss=BinaryCrossEntropy()
     )
-    trainer.fit(train_data, epochs=1, batches_per_epoch=min(batch_size, max_batches))
+    # Approximate batches per epoch
+    batches = int(
+        (sum(word_counts.values()) * (2 * window_size + negative_samples) - sum(range(window_size)) * 2) *
+        0.658 / batch_size
+    )
+    trainer.fit(train_data, epochs=1, batches_per_epoch=min(batches, max_batches))
     # Save the trained weights (word embeddings)
-    skipgram[0].save('embeddings.npy')
+    skipgram[0].save('embeddings_skipgram.npy')
