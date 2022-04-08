@@ -1,7 +1,7 @@
 import numpy as np
 import random
 
-from typing import Generator, List, Optional, Tuple, Union, Sequence
+from typing import Generator, List, Optional, Tuple, Union
 
 
 def to_one_hot(vector: Union[List[int], Tuple[int, ...], np.ndarray],
@@ -45,6 +45,3 @@ def cosine_similarity(x: Union[List[int], Tuple[int, ...], np.ndarray],
     assert x.shape == y.shape, "Vector dimensions are not equal"
     cos = np.dot(x, y) / np.linalg.norm(x) / np.linalg.norm(y)
     return float(cos)
-
-
-# def generate_projector_files(embeddings: np.ndarray, vocabulary: )
