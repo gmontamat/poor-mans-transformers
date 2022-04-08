@@ -14,6 +14,13 @@ the [Natural Language Processing Specialization](https://www.coursera.org/specia
 I'm keeping track of my progress in this section, so it can be used for future reference when learning Deep Learning
 from the very beginnings.
 
+### Index
+
+* [First steps: basic layers and training framework](#bookmark-first-steps-basic-layers-and-training-framework)
+* [Word Embeddings (work in progress)](#construction-word-embeddings-work-in-progress)
+
+---
+
 ### :bookmark: First steps: basic layers and training framework
 
 First things first, I need to implement the basic structure of the framework and be able to train a Multilayer
@@ -61,9 +68,9 @@ An `Activation` is a special type of `Layer` whose `input_shape` and `output_sha
 :heavy_check_mark: [Activation](poormanstransformers/layers.py#L80-L90)
 :white_check_mark: [Dense](poormanstransformers/layers.py#L93-L131)
 :white_check_mark: [ReLU](poormanstransformers/layers.py#L134-L140)
-:white_check_mark: [Softmax](poormanstransformers/layers.py#L143-L161)
-:white_check_mark: [LogSoftmax](poormanstransformers/layers.py#L164-L181)
-:white_check_mark: [Dropout](poormanstransformers/layers.py#L184-L202)
+:white_check_mark: [Softmax](poormanstransformers/layers.py#L153-L171)
+:white_check_mark: [LogSoftmax](poormanstransformers/layers.py#L174-L191)
+:white_check_mark: [Dropout](poormanstransformers/layers.py#L194-L212)
 
 #### :pushpin: Parameter and Optimizer
 
@@ -87,9 +94,9 @@ prediction's probabilities *logits*) and return the calculated metric. The `Loss
 `d_loss / d_yhat` to begin the backward propagation.
 
 :heavy_check_mark: [Loss](poormanstransformers/losses.py#L6-L27)
-:heavy_check_mark: [Metric](poormanstransformers/losses.py#L48-L59)
-:white_check_mark: [CategoricalCrossEntropy](poormanstransformers/losses.py#L30-L45)
-:white_check_mark: [Accuracy](poormanstransformers/losses.py#L62-L70)
+:heavy_check_mark: [Metric](poormanstransformers/losses.py#L30-L41)
+:white_check_mark: [CategoricalCrossEntropy](poormanstransformers/losses.py#L44-L59)
+:white_check_mark: [Accuracy](poormanstransformers/losses.py#L76-L84)
 
 #### :pushpin: Model, Trainer, and DataGeneratorWrapper
 
@@ -124,12 +131,14 @@ several vector functions. The following articles helped me clarify the math need
 python ./examples/mlp.py
 ```
 
+---
+
 ### :construction: Word Embeddings (work in progress)
 
 My next goal is to have an `Embedding` layer implemented and try it out by replicating
 [word2vec](https://code.google.com/archive/p/word2vec/) models using both the Continuous Bag of Words (CBOW) and
-Skip-Gram architectures. We should be able to generate word embeddings and compare their accuracy on the Semantic-
-Syntactic Word Relationship test set mentioned in [word2vec's paper](https://arxiv.org/pdf/1301.3781.pdf).
+Skip-Gram architectures. We should be able to generate word embeddings and compare their accuracy on the
+Semantic-Syntactic Word Relationship test set mentioned in [word2vec's paper](https://arxiv.org/pdf/1301.3781.pdf).
 
 With the framework in place and validated with the Multilayer Perceptron trained on MNIST, this part should have been a
 matter of adding some subclasses and helper functions... but it wasn't. A very basic example with the CBOW model was
@@ -153,7 +162,7 @@ The `Embedding` layer is equivalent to a `Dense` layer if we converted the word 
 weights. Here instead, the layer takes the word representation (integer between 0 and `vocab_size-1`) and use it to
 index the weights' matrix. We avoid doing a matrix-matrix dot product which is more expensive.
 
-:white_check_mark: [Embedding](poormanstransformers/layers.py#L205-L237)
+:white_check_mark: [Embedding](poormanstransformers/layers.py#L215-L247)
 
 #### :pushpin: AxisMean
 
@@ -163,7 +172,11 @@ have tools like [autograd](https://github.com/HIPS/autograd) to compute a gradie
 forward function. For simplicity, I created the `AxisMean` layer instead of a `Lambda` layer which doesn't require the
 aforementioned tool.
 
-:white_check_mark: [AxisMean](poormanstransformers/layers.py#L240-L260)
+:white_check_mark: [AxisMean](poormanstransformers/layers.py#L250-L270)
+
+#### :construction: AxisDot
+
+#### :construction: BinaryCrossEntropy
 
 #### :pushpin: RMSProp
 
