@@ -111,7 +111,7 @@ if __name__ == '__main__':
     embedding_size = 300
     window_size = 10
     negative_samples = 20
-    batch_size = 2048
+    batch_size = 4096
     corpus = 'text8'
     try:
         vocabulary, word_counts = create_vocabulary(corpus, size=vocab_size, oov_token=oov_token)
@@ -119,8 +119,9 @@ if __name__ == '__main__':
         print("Download Text8 dataset. Run ./download_text8.sh")
         print(f"File needed: {corpus}")
         sys.exit(0)
-    max_batches = batch_size * 100
-    assert max_batches < batch_size or max_batches % batch_size == 0
+    max_batches = None
+    # max_batches = batch_size * 100
+    # assert max_batches < batch_size or max_batches % batch_size == 0
     train_data = DataGeneratorWrapper(
         generate_skipgrams, text_file=corpus, vocabulary=vocabulary, word_counts=word_counts,
         window_size=window_size, negative_samples=negative_samples, batch_size=batch_size,
@@ -142,6 +143,10 @@ if __name__ == '__main__':
         (sum(word_counts.values()) * (2 * window_size + negative_samples) - sum(range(window_size)) * 2) *
         0.658 / batch_size
     )
-    trainer.fit(train_data, epochs=1, batches_per_epoch=min(batches, max_batches))
+    if max_batches is not None:
+        batches_per_epoch = min(batches, max_batches)
+    else:
+        batches_per_epoch = batches
+    trainer.fit(train_data, epochs=2, batches_per_epoch=batches_per_epoch)
     # Save the trained weights (word embeddings)
     skipgram[0].save('embeddings_skipgram.npy')
