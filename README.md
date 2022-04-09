@@ -143,8 +143,8 @@ Semantic-Syntactic Word Relationship test set mentioned in [word2vec's paper](ht
 With the framework in place and validated with the Multilayer Perceptron trained on MNIST, this part should have been a
 matter of adding some subclasses and helper functions... but it wasn't. A very basic example with the CBOW model was
 created by just adding the `Embedding` and `AxisMean` layers. There were two problems though: first, it's not an exact
-replica of the model architecture since `Softmax` will propagate the gradients for all the words in the vocabulary
-(Hierarchical Softmax is used in word2vec which is also faster). Second, the lack of a `Lambda` layer which computes and
+replica of the model architecture since `Softmax` will propagate the gradients to all the words in the vocabulary
+(Hierarchical Softmax is used in word2vec which is faster). Second, the lack of a `Lambda` layer which computes and
 propagates the gradients of a user-defined forward function is difficult to code (not impossible, but we don't want
 autograd here).
 
@@ -203,10 +203,24 @@ Subsampling and negative sampling formulas used are explained in the following s
 
 * [Word2Vec Tutorial Part 2 - Negative Sampling](https://mccormickml.com/2017/01/11/word2vec-tutorial-part-2-negative-sampling/)
 
+Training word embeddings like those they released by word2vec is painfully slow and difficult. It's also very hard to
+debug since we didn't follow the code they've released in C but copied the architecture they describe in their papers.
+To validate that our network is working I created [this example](./examples/validate_word2vec.py) that trains a very
+basic embedding of 2 dimensions with a vocabulary of the words "Paris", "France", "Berlin", and "Germany". I got
+promising results like the following:
+
+![Basic word2vec embedding](./assets/word2vec_sample.png)
+
 #### :construction: Sample code
 
 :heavy_check_mark: [Continuous Bag of Words (CBOW) with Text8](./examples/cbow.py)
 
 ```shell
 python ./examples/cbow.py
+```
+
+:heavy_check_mark: [Skip-gram with Text8](./examples/skipgram.py)
+
+```shell
+python ./examples/skipgram.py
 ```
