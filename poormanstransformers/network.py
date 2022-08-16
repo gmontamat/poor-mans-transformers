@@ -1,7 +1,7 @@
 import inspect
 import networkx as nx
 
-from .layers import Layer, Dense, ReLU, Dropout, LogSoftmax, Embedding, Sigmoid
+from .layers import Layer, Dense, ReLU, Dropout, LogSoftmax, Embedding, Sigmoid, Dot
 
 
 class NeuralNetwork:
@@ -14,15 +14,17 @@ class NeuralNetwork:
         so they can add edges when called.
         """
         for element in inspect.getmembers(self):
-            if isinstance(element, Layer):
-                element.__setattr__('network', self.callgraph)
+            if isinstance(element[1], Layer):
+                element[1].__setattr__('network', self.callgraph)
         # Build directed acyclic graph
-        inputs = [x for x in inspect.getfullargspec(self.forward)[0]]
+        inputs = [x for x in inspect.getfullargspec(self.forward).args][1:]
         # Run forward pass with pointers to build DAG
         self.forward(*inputs)
-        # Validate that the callgraph is a DAG (can't backpropagate with cycles)
+        # Validate that the callgraph is a DAG (can't backprop when cycles occur)
         assert nx.is_directed_acyclic_graph(self.callgraph), \
             "Check forward method, NeuralNetwork contains cycles."
+        print(list(nx.topological_sort(self.callgraph)))
+        print(nx.edges(self.callgraph))
 
     def forward(self, *args):
         """Define forward pass of Neural Network."""
@@ -68,3 +70,10 @@ class SkipGram(NeuralNetwork):
         dot = self.dot(embedding1, embedding2)
         y = self.dense(dot)
         return self.sigmoid(y)
+
+
+if __name__ == '__main__':
+    mlp = MLP()
+    mlp.compile()
+    skipgram = SkipGram(vocab_size=1000, embedding_size=30)
+    skipgram.compile()

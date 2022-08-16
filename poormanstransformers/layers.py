@@ -1,7 +1,6 @@
-import inspect
 import numpy as np
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from .optimizers import Optimizer
 
@@ -55,9 +54,9 @@ class Layer:
             "Layer cannot be called if not instantiated as a NeuralNetwork attribute."
         for arg in args:
             self.network.add_edge(arg, self)
-        # TODO:
-        # Return as many outputs myself
-        return tuple(self for _ in inspect.getfullargspec(self.forward)[0])
+        # TODO: return as many outputs "self"
+        # return tuple(self for _ in inspect.getfullargspec(self.forward)[0])
+        return self
 
     def initialize(self):
         """Initialize parameters weights and optimizers."""
@@ -67,11 +66,13 @@ class Layer:
         """Return all parameters used by the layer."""
         return [getattr(self, attr) for attr in dir(self) if isinstance(getattr(self, attr), Parameter)]
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, *args: np.ndarray) -> Union[np.ndarray, Tuple[np.ndarray, ...]]:
         """Take input data of shape `input_shape`, perform forward pass.
         """
         # Dummy layer just returns whatever it gets as input.
-        return x
+        if len(args) == 1:
+            return args[0]
+        return args
 
     def backward(self, x: np.ndarray, grad: np.ndarray) -> np.ndarray:
         """Perform backpropagation step through the layer with respect to a given input (x).
@@ -305,3 +306,12 @@ class AxisDot(Layer):
         if self.axis == 2 or self.axis == -1:
             return self.last_input[:, :, ::-1] * np.repeat(np.expand_dims(grad, axis=-1), 2, axis=-1)
         return self.last_input[:, ::-1, :] * np.expand_dims(np.repeat(grad, 2, axis=-1), axis=-1)
+
+
+class Dot(Layer):
+
+    def __init__(self):
+        super(Dot, self).__init__()
+
+    def forward(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        return x.dot(y)

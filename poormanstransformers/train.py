@@ -1,16 +1,15 @@
 import numpy as np
 
 from copy import copy
-from typing import Callable, Dict, Generator, List, Optional, Tuple, Union
+from typing import Callable, Generator, List, Optional, Tuple, Union
 from tqdm import tqdm
 
-from .layers import Layer, Parameter
+from .layers import Layer
 from .losses import Loss, Metric
 from .optimizers import Optimizer
 
-# A model is simply a list of layers
-Model = List[Layer]
-# ModelWeights = List[Dict[str, Parameter]]
+# A sequential model is simply a list of layers
+SequentialModel = List[Layer]
 
 
 class DataGeneratorWrapper:
@@ -39,7 +38,7 @@ class Trainer:
     """
 
     def __init__(self,
-                 model: Model,
+                 model: SequentialModel,
                  optimizer: Optimizer,
                  loss: Loss,
                  metrics: Optional[List[Union[Loss, Metric]]] = None):
