@@ -224,3 +224,17 @@ python ./examples/cbow.py
 ```shell
 python ./examples/skipgram.py
 ```
+
+---
+
+### :construction: Quarter-life crisis: handling complex architectures (work in progress)
+
+So far we created very simple sequential models that can be implemented as a list of layers. We can define a multi-layer
+perceptron, convolutional neural networks, and, with some tricks (like AxisDot), define the skip-gram model in the
+previous section. But looking at more complex architectures, like the encoder-decoder transformer, we see that tensors
+don't flow in a sequential manner. More generally, deep neural networks can be seen as directed acyclic multi-graphs
+with several inputs and outputs, and residual operations.
+
+One possible extension we could implement is that of stack notation, where each layer operates only on the top of a
+stack while partial results are kept on the bottom of it waiting to be used.
+Trax relies on it to 

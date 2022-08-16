@@ -1,3 +1,4 @@
+import inspect
 import numpy as np
 
 from typing import List, Optional, Tuple
@@ -44,9 +45,19 @@ class Layer:
         """Define layer's input and output shape, and parameters (if any)."""
         self.input_shape = input_shape
         self.output_shape = output_shape
+        self.network = None
 
     def __str__(self):
         return f"{type(self).__name__.ljust(15)}: {self.output_shape}"
+
+    def __call__(self, *args):
+        assert self.network is not None,\
+            "Layer cannot be called if not instantiated as a NeuralNetwork attribute."
+        for arg in args:
+            self.network.add_edge(arg, self)
+        # TODO:
+        # Return as many outputs myself
+        return tuple(self for _ in inspect.getfullargspec(self.forward)[0])
 
     def initialize(self):
         """Initialize parameters weights and optimizers."""
