@@ -141,7 +141,7 @@ several vector functions. The following articles helped me clarify the math need
 ```shell
 cd examples
 ./download_mnist.sh
-python ./examples/mlp.py
+python3 mlp.py
 ```
 
 ---
@@ -238,7 +238,7 @@ embedding represents "is the capital of".
 ```shell
 cd examples
 ./download_text8.sh
-python ./cbow.py
+python3 cbow.py
 ```
 
 :construction: [Skip-gram with Text8](./examples/skipgram.py)
@@ -246,7 +246,7 @@ python ./cbow.py
 ```shell
 cd examples
 ./download_text8.sh
-python ./skipgram.py
+python3 skipgram.py
 ```
 
 ---
