@@ -2,26 +2,37 @@
 
 Advanced Deep Learning from the ground-up.
 
-The idea of this repository is to implement all the necessary layers of a transformer using just `numpy` for learning
-purposes. The end goal is to train a Transformer model on [QQP](https://www.kaggle.com/c/quora-question-pairs) or a
-model that performs Named Entity Recognition (NER) decently. I was inspired by
+The idea of this repository is to implement the necessary framework and layers of a transformer using just `numpy` for
+learning purposes. The end goal is to train a Transformer model on [QQP](https://www.kaggle.com/c/quora-question-pairs)
+or a model that performs Named Entity Recognition (NER) decently. I was inspired by
 [ML-From-Scratch](https://github.com/eriklindernoren/ML-From-Scratch),
 the [Advanced Machine Learning Specialization](https://www.coursera.org/specializations/aml), and
 the [Natural Language Processing Specialization](https://www.coursera.org/specializations/natural-language-processing).
 
+Self-imposed rules for developing this toy framework:
+
+- Use only the python standard library and `numpy` as a (tensor algebra) dependency. I relaxed this rule a bit to
+  include some other useful features such as a progress bar for the training loop (using `tqdm`) and visualizations (
+  with
+  `matplotlib`).
+- Readability is more important than efficiency here. Code is not optimal but should be clear.
+- No scooping at PyTorch, TensorFlow, or [tinygrad](https://github.com/tinygrad/tinygrad) implementations.
+
 ## :notebook: Development log
 
 I'm keeping track of my progress in this section, so it can be used for future reference when learning Deep Learning
-from the very beginnings.
+from the very basics.
 
 ### Index
 
-* [First steps: basic layers and training framework](#bookmark-first-steps-basic-layers-and-training-framework)
-* [Word Embeddings (work in progress)](#construction-word-embeddings-work-in-progress)
+* [First steps: basic layers and training framework for an MLP](#bookmark-first-steps-basic-layers-and-training-framework-for-an-mlp)
+* Convolutional Neural Networks (TODO)
+* [Word Embeddings](#construction-word-embeddings)
+* [Handling non-sequential architectures](#construction-handling-non-sequential-architectures)
 
 ---
 
-### :bookmark: First steps: basic layers and training framework
+### :bookmark: First steps: basic layers and training framework for an MLP
 
 First things first, I need to implement the basic structure of the framework and be able to train a Multilayer
 Perceptron (MLP) with it. I base my work
@@ -33,8 +44,8 @@ Even though this was supposed to be an easy step, I ended up spending a lot of t
 simplest OOP architecture possible. New layers have to be easy to code, and I also want to experiment with different
 optimizers (SGD, Adam, RMSProp), learning rate schedules, activation functions (ReLU, tanh, sigmoid, Softmax,
 LogSoftmax), custom loss functions (sum binary cross-entropy and categorical cross-entropy as used for training BERT)
-and handle input & output flow (serial, parallel, concatenations). At the same time, I wouldn't like to waste time
-building a flexible and feature-rich framework since we already have PyTorch, TensorFlow with Keras,
+and easily handle input & output flow (serial, parallel, concatenations, skip-connections). At the same time, I wouldn't
+like to waste time building a flexible and feature-rich framework since we already have PyTorch, TensorFlow with Keras,
 [JAX](https://github.com/google/jax), and [Google Trax](https://github.com/google/trax) for that.
 
 To keep this toy "framework" as simple as possible, I want to minimize the number of base classes. I ended up with:
@@ -64,13 +75,13 @@ the model's initialization step. The initial weights of each `Parameter` also ne
 
 An `Activation` is a special type of `Layer` whose `input_shape` and `output_shape` are the same.
 
-:heavy_check_mark: [Layer](poormanstransformers/layers.py#L32-L77)
-:heavy_check_mark: [Activation](poormanstransformers/layers.py#L80-L90)
-:white_check_mark: [Dense](poormanstransformers/layers.py#L93-L131)
-:white_check_mark: [ReLU](poormanstransformers/layers.py#L134-L140)
-:white_check_mark: [Softmax](poormanstransformers/layers.py#L153-L171)
-:white_check_mark: [LogSoftmax](poormanstransformers/layers.py#L174-L191)
-:white_check_mark: [Dropout](poormanstransformers/layers.py#L194-L212)
+:heavy_check_mark: [Layer](poormanslayers/layers.py#L32-L77)
+:heavy_check_mark: [Activation](poormanslayers/layers.py#L80-L90)
+:white_check_mark: [Dense](poormanslayers/layers.py#L93-L131)
+:white_check_mark: [ReLU](poormanslayers/layers.py#L134-L140)
+:white_check_mark: [Softmax](poormanslayers/layers.py#L153-L171)
+:white_check_mark: [LogSoftmax](poormanslayers/layers.py#L174-L191)
+:white_check_mark: [Dropout](poormanslayers/layers.py#L194-L212)
 
 #### :pushpin: Parameter and Optimizer
 
@@ -83,9 +94,9 @@ by the `Trainer` object. The `Optimizer` is in charge of updating the parameter'
 variables to do so, hence, each parameter has a unique copy of it. Again, it set by the `Trainer` during the model's
 initialization.
 
-:heavy_check_mark: [Parameter](poormanstransformers/layers.py#L8-L29)
-:heavy_check_mark: [Optimizer](poormanstransformers/optimizers.py#L4-L11)
-:white_check_mark: [Adam](poormanstransformers/optimizers.py#L14-L43)
+:heavy_check_mark: [Parameter](poormanslayers/layers.py#L8-L29)
+:heavy_check_mark: [Optimizer](poormanslayers/optimizers.py#L4-L11)
+:white_check_mark: [Adam](poormanslayers/optimizers.py#L14-L43)
 
 #### :pushpin: Loss and Metric
 
@@ -93,10 +104,10 @@ These classes are pretty straightforward: instances are called with the ground t
 prediction's probabilities *logits*) and return the calculated metric. The `Loss` class also returns the gradient
 `d_loss / d_yhat` to begin the backward propagation.
 
-:heavy_check_mark: [Loss](poormanstransformers/losses.py#L6-L27)
-:heavy_check_mark: [Metric](poormanstransformers/losses.py#L30-L41)
-:white_check_mark: [CategoricalCrossEntropy](poormanstransformers/losses.py#L44-L59)
-:white_check_mark: [Accuracy](poormanstransformers/losses.py#L76-L84)
+:heavy_check_mark: [Loss](poormanslayers/losses.py#L6-L27)
+:heavy_check_mark: [Metric](poormanslayers/losses.py#L30-L41)
+:white_check_mark: [CategoricalCrossEntropy](poormanslayers/losses.py#L44-L59)
+:white_check_mark: [Accuracy](poormanslayers/losses.py#L76-L84)
 
 #### :pushpin: Model, Trainer, and DataGeneratorWrapper
 
@@ -112,8 +123,8 @@ passed via a generator function that has to be written for every particular data
 `DataGeneratorWrapper` whose only purpose is to initialize the generator with all the arguments passed so that the data
 could be "rewound" at the beginning of each epoch.
 
-:heavy_check_mark: [Trainer](poormanstransformers/train.py#L34)
-:heavy_check_mark: [DataGeneratorWrapper](poormanstransformers/train.py#L16-L31)
+:heavy_check_mark: [Trainer](poormanslayers/train.py#L34)
+:heavy_check_mark: [DataGeneratorWrapper](poormanslayers/train.py#L16-L31)
 
 #### :warning: Challenges
 
@@ -128,12 +139,14 @@ several vector functions. The following articles helped me clarify the math need
 :heavy_check_mark: [MLP for MNIST Digit recognition](./examples/mlp.py)
 
 ```shell
+cd examples
+./download_mnist.sh
 python ./examples/mlp.py
 ```
 
 ---
 
-### :construction: Word Embeddings (work in progress)
+### :construction: Word Embeddings
 
 My next goal is to have an `Embedding` layer implemented and try it out by replicating
 [word2vec](https://code.google.com/archive/p/word2vec/) models using both the Continuous Bag of Words (CBOW) and
@@ -162,7 +175,7 @@ The `Embedding` layer is equivalent to a `Dense` layer if we converted the word 
 weights. Here instead, the layer takes the word representation (integer between 0 and `vocab_size-1`) and use it to
 index the weights' matrix. We avoid doing a matrix-matrix dot product which is more expensive.
 
-:white_check_mark: [Embedding](poormanstransformers/layers.py#L215-L247)
+:white_check_mark: [Embedding](poormanslayers/layers.py#L215-L247)
 
 #### :pushpin: AxisMean
 
@@ -172,7 +185,7 @@ have tools like [autograd](https://github.com/HIPS/autograd) to compute a gradie
 forward function. For simplicity, I created the `AxisMean` layer instead of a `Lambda` layer which doesn't require the
 aforementioned tool.
 
-:white_check_mark: [AxisMean](poormanstransformers/layers.py#L250-L270)
+:white_check_mark: [AxisMean](poormanslayers/layers.py#L250-L270)
 
 #### :construction: AxisDot
 
@@ -183,7 +196,7 @@ aforementioned tool.
 Implementing this optimizer is straightforward. Just need to keep a moving average of the element-wise squared gradient
 and use its squared root when updating the weights.
 
-:white_check_mark: [RMSProp](poormanstransformers/optimizers.py#L46-L65)
+:white_check_mark: [RMSProp](poormanslayers/optimizers.py#L46-L65)
 
 #### :warning: Challenges
 
@@ -205,36 +218,45 @@ Subsampling and negative sampling formulas used are explained in the following s
 
 Training word embeddings like those they released by word2vec is painfully slow and difficult. It's also very hard to
 debug since we didn't follow the code they've released in C but copied the architecture they describe in their papers.
-To validate that our network is working I created [this example](./examples/validate_word2vec.py) that trains a very
-basic embedding of 2 dimensions with a vocabulary of the words "Paris", "France", "Berlin", and "Germany". I got
-promising results like the following:
+To validate that our network is working I created [this toy example](./examples/validate_word2vec.py) that trains a very
+basic embedding of 2 dimensions with a vocabulary of words "Paris", "France", "Berlin", and "Germany". I got promising
+results like the following:
 
 ![Basic word2vec embedding](./assets/word2vec_sample.png)
 
+The vector "Paris" -> "France" is almost the same as "Berlin" -> "Germany" indicating that this direction in the
+embedding represents "is the capital of".
+
 #### :construction: Sample code
 
-:heavy_check_mark: [Continuous Bag of Words (CBOW) with Text8](./examples/cbow.py)
+:construction: [Continuous Bag of Words (CBOW) with Text8](./examples/cbow.py)
 
 ```shell
-python ./examples/cbow.py
+cd examples
+./download_text8.sh
+python ./cbow.py
 ```
 
-:heavy_check_mark: [Skip-gram with Text8](./examples/skipgram.py)
+:construction: [Skip-gram with Text8](./examples/skipgram.py)
 
 ```shell
-python ./examples/skipgram.py
+cd examples
+./download_text8.sh
+python ./skipgram.py
 ```
 
 ---
 
-### :construction: Quarter-life crisis: handling complex architectures (work in progress)
+### :construction: Handling non-sequential architectures
 
-So far we created very simple sequential models that can be implemented as a list of layers. We can define a multi-layer
-perceptron, convolutional neural networks, and, with some tricks (like AxisDot), define the skip-gram model in the
-previous section. But looking at more complex architectures, like the encoder-decoder transformer, we see that tensors
-don't flow in a sequential manner. More generally, deep neural networks can be seen as directed acyclic multi-graphs
-with several inputs and outputs, and residual operations.
-
-One possible extension we could implement is that of stack notation, where each layer operates only on the top of a
-stack while partial results are kept on the bottom of it waiting to be used.
-Trax relies on it to 
+So far we created very simple model architectures that can be implemented as a sequence of layers. We could define the
+multi-layer perceptron, convolutional neural networks, and, with some tricks (like `AxisDot`), the skip-gram model
+in the previous section. But looking at more complex architectures, like the encoder-decoder transformer, we see that
+tensors don't flow in a sequential manner. More generally, deep neural networks can be seen as directed acyclic
+multi-graphs with several inputs and outputs, and residual operations. I tried to extend the original `Layer` class
+to support networks but then realized that the framework is inflexible. I also began using PyTorch and found its
+`nn.Module` component practical for defining any kind of architecture and connections (no need to
+use [combinator layers](https://trax-ml.readthedocs.io/en/latest/trax.layers.html#module-trax.layers.combinators) for
+example). Coding in a Deep Neural network on PyTorch is more natural. I therefore replicate this component from scratch,
+with another caveat: since anyone can extend this module to implement any type of operation, automatic gradient
+computation is a must.
