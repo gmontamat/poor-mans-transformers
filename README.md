@@ -75,13 +75,13 @@ the model's initialization step. The initial weights of each `Parameter` also ne
 
 An `Activation` is a special type of `Layer` whose `input_shape` and `output_shape` are the same.
 
-:heavy_check_mark: [Layer](poormanslayers/layers.py#L32-L77)
-:heavy_check_mark: [Activation](poormanslayers/layers.py#L80-L90)
-:white_check_mark: [Dense](poormanslayers/layers.py#L93-L131)
-:white_check_mark: [ReLU](poormanslayers/layers.py#L134-L140)
-:white_check_mark: [Softmax](poormanslayers/layers.py#L153-L171)
-:white_check_mark: [LogSoftmax](poormanslayers/layers.py#L174-L191)
-:white_check_mark: [Dropout](poormanslayers/layers.py#L194-L212)
+:heavy_check_mark: [Layer](poormanslayers/layers.py#L32-L79)
+:heavy_check_mark: [Activation](poormanslayers/layers.py#L82-L92)
+:white_check_mark: [Dense](poormanslayers/layers.py#L95-L133)
+:white_check_mark: [ReLU](poormanslayers/layers.py#L136-L142)
+:white_check_mark: [Softmax](poormanslayers/layers.py#L155-L173)
+:white_check_mark: [LogSoftmax](poormanslayers/layers.py#L176-L193)
+:white_check_mark: [Dropout](poormanslayers/layers.py#L196-L214)
 
 #### :pushpin: Parameter and Optimizer
 
@@ -123,8 +123,8 @@ passed via a generator function that has to be written for every particular data
 `DataGeneratorWrapper` whose only purpose is to initialize the generator with all the arguments passed so that the data
 could be "rewound" at the beginning of each epoch.
 
-:heavy_check_mark: [Trainer](poormanslayers/train.py#L34)
-:heavy_check_mark: [DataGeneratorWrapper](poormanslayers/train.py#L16-L31)
+:heavy_check_mark: [Trainer](poormanslayers/train.py#L33)
+:heavy_check_mark: [DataGeneratorWrapper](poormanslayers/train.py#L15-L30)
 
 #### :warning: Challenges
 
@@ -175,7 +175,7 @@ The `Embedding` layer is equivalent to a `Dense` layer if we converted the word 
 weights. Here instead, the layer takes the word representation (integer between 0 and `vocab_size-1`) and use it to
 index the weights' matrix. We avoid doing a matrix-matrix dot product which is more expensive.
 
-:white_check_mark: [Embedding](poormanslayers/layers.py#L215-L247)
+:white_check_mark: [Embedding](poormanslayers/layers.py#L217-L249)
 
 #### :pushpin: AxisMean
 
@@ -185,11 +185,15 @@ have tools like [autograd](https://github.com/HIPS/autograd) to compute a gradie
 forward function. For simplicity, I created the `AxisMean` layer instead of a `Lambda` layer which doesn't require the
 aforementioned tool.
 
-:white_check_mark: [AxisMean](poormanslayers/layers.py#L250-L270)
+:white_check_mark: [AxisMean](poormanslayers/layers.py#L252-L272)
 
 #### :construction: AxisDot
 
+:white_check_mark: [AxisDot](poormanslayers/layers.py#L275-L298)
+
 #### :construction: BinaryCrossEntropy
+
+:white_check_mark: [BinaryCrossEntropy](poormanslayers/losses.py#L62-L73)
 
 #### :pushpin: RMSProp
 
