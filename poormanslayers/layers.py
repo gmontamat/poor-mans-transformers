@@ -7,7 +7,7 @@ from .optimizers import Optimizer
 
 class Parameter:
     """
-    Parameter base class. Only layers can instantiate these objects
+    Parameter base class. Only layers can instantiate these objects,
     and they need to initialize the weights and set the optimizer
     before doing forward/backward propagation.
     """
