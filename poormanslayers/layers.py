@@ -296,12 +296,3 @@ class AxisDot(Layer):
         if self.axis == 2 or self.axis == -1:
             return self.last_input[:, :, ::-1] * np.repeat(np.expand_dims(grad, axis=-1), 2, axis=-1)
         return self.last_input[:, ::-1, :] * np.expand_dims(np.repeat(grad, 2, axis=-1), axis=-1)
-
-
-class Dot(Layer):
-
-    def __init__(self):
-        super(Dot, self).__init__()
-
-    def forward(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        return x.dot(y)
